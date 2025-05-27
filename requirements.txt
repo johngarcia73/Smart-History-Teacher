@@ -1,0 +1,7 @@
+flask 
+lti 
+requests 
+oauthlib
+logging
+numpy
+spacy
