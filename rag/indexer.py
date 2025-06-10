@@ -9,7 +9,10 @@ import nltk
 from nltk.tokenize import sent_tokenize
 
 # Asegurarse de tener descargado el paquete punkt de nltk (se descarga una sola vez)
-nltk.download('punkt')
+#nltk.download('punkt')
+#nltk.download('cess_esp')  # Corpus para español
+#nltk.download('cess_esp_udep')  # Modelo POS para español
+#nltk.download('spanish_grammars')  # Gramáticas para español
 
 def load_documents_from_folder(folder_path):
     """
@@ -41,13 +44,17 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
     documents = load_documents_from_folder(folder_path)
     chunks = []
     chunk_metadata = []
-    
+    2
     for doc_id, doc in enumerate(documents):
         doc_chunks = chunk_text(doc, max_sentences=2)
         for chunk in doc_chunks:
             chunks.append(chunk)
             chunk_metadata.append({'document_id': doc_id, 'text': chunk})
     
+    for i, metadata in enumerate(chunk_metadata):
+        metadata['source']  = 'local'
+        
+        
     print("Generando embeddings...")
     embedder = SentenceTransformer('all-MiniLM-L6-v2')
     chunk_embeddings = embedder.encode(chunks, convert_to_numpy=True)
@@ -64,3 +71,4 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         pickle.dump(chunk_metadata, f)
     
     print("Se han generado y guardado el índice y los metadatos.")
+  
