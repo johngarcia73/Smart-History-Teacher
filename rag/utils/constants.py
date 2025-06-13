@@ -3,6 +3,7 @@ SEARCH_JID = "search_agent@localhost"
 EVAL_JID = "eval_agent@localhost"
 PROMPT_JID = "prompt_agent@localhost"
 SCRAPER_JID = "scrapper_agent@localhost"
+CRAWLER_JID = "crawler_agent@localhost"   
 
 INDEX_FILE = "faiss_index.bin"
 METADATA_FILE = "chunk_metadata.pickle"
@@ -13,7 +14,8 @@ PASSWORDS = {
     SEARCH_JID: "notelasabes",
     EVAL_JID: "notelasabes",
     PROMPT_JID: "notelasabes",
-    SCRAPER_JID: "notelasabes"
+    SCRAPER_JID: "notelasabes",
+    CRAWLER_JID: "notelasabes"
 }
 
 INDEX_FILE = "faiss_index.bin"

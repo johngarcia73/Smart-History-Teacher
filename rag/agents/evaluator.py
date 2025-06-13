@@ -9,7 +9,7 @@ from spade.behaviour import CyclicBehaviour
 from spade.message import Message
 from spade.template import Template
 from rank_bm25 import BM25Okapi
-from utils.constants import METADATA_FILE, PROMPT_JID, SCORE_THRESHOLD, SCRAPER_JID, CONFIDENCE_THRESHOLD
+from utils.constants import METADATA_FILE, PROMPT_JID, SCORE_THRESHOLD, SCRAPER_JID, CONFIDENCE_THRESHOLD, CRAWLER_JID
 from utils.helpers import safe_json_dumps
 from agents.query_analyzer import QueryAnalyzer
 from agents.score_normalizer import ScoreNormalizer
@@ -55,11 +55,11 @@ class EvaluationAgent(Agent):
                     "sender": str(original_sender)
                 }
                 
-                scrape_msg = Message(to=SCRAPER_JID)
+                scrape_msg = Message(to=CRAWLER_JID)
                 scrape_msg.set_metadata("phase", "scrape_request")
                 scrape_msg.body = safe_json_dumps({
                     "query": query,
-                    "max_chunks": 3
+                    "max_chunks": 10
                 })
                 await self.send(scrape_msg)
             else:
@@ -108,14 +108,18 @@ class EvaluationAgent(Agent):
 
                 # Se usa la fórmula 1/(1+d)
                 faiss_raw_scores = [1.0 / (1.0 + c["distance"]) for c in candidates]
-                faiss_norm = self.agent.score_normalizer.minmax_scale(faiss_raw_scores)
+                # Aplicar la normalización sigmoidea para suavizar las diferencias
+                faiss_norm = self.agent.score_normalizer.sigmoid_scale(faiss_raw_scores, a=10)
 
                 bm25_full_scores = self.agent.bm25.get_scores(query_tokens)
                 candidate_bm25_scores = []
                 for i, candidate in enumerate(candidates):
                     candidate_index = candidate.get("id", i)
                     candidate_bm25_scores.append(bm25_full_scores[candidate_index])
-                bm25_norm = self.agent.score_normalizer.minmax_scale(candidate_bm25_scores)
+                bm25_norm = self.agent.score_normalizer.sigmoid_scale(candidate_bm25_scores, a=10)
+
+
+
 
                 ranked_candidates = []
                 for i, candidate in enumerate(candidates):

@@ -20,7 +20,7 @@ class QueryInitiatorAgent(Agent):
                 await self.send(msg)
                 
                 # Esperar respuesta
-                final_msg = await self.receive(timeout=20)
+                final_msg = await self.receive(timeout=40)
                 if final_msg and final_msg.get_metadata("phase") == "final":
                     try:
                         data = json.loads(final_msg.body)

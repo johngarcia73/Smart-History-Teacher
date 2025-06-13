@@ -32,3 +32,10 @@ class ScoreNormalizer:
         """Transformación Softmax para distribución de probabilidad"""
         exp_scores = np.exp(scores - np.max(scores))
         return list(exp_scores / exp_scores.sum())
+    
+    def sigmoid_scale(self, scores, a=10, b=None):
+        scores = np.array(scores)
+        if b is None:
+            b = np.mean(scores)
+        # Evitamos overflow al limitar los argumentos de la exponencial
+        return 1 / (1 + np.exp(-a * (scores - b)))
