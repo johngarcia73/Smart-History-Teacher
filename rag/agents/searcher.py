@@ -13,6 +13,8 @@ from sentence_transformers import SentenceTransformer
 from utils.constants import INDEX_FILE, METADATA_FILE, DOCUMENTS_FOLDER, EVAL_JID
 from utils.helpers import safe_json_dumps
 from indexer import build_index
+from fastembed import TextEmbedding
+
 
 class SearchAgent(Agent):
     async def setup(self):
@@ -31,6 +33,9 @@ class SearchAgent(Agent):
         self.tokenized_chunks = [word_tokenize(chunk.lower()) for chunk in self.chunks]
         self.bm25 = BM25Okapi(self.tokenized_chunks)
         self.embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        #self.embedder =  TextEmbedding("sentence-transformers/all-MiniLM-L6-v2", cache_dir="model_cache")
+
+        
         self.add_behaviour(self.SearchBehaviour())
         print(f"{self.jid} iniciado correctamente")
 

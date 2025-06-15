@@ -1,6 +1,6 @@
 import asyncio
 from utils.constants import (
-    SEARCH_JID, EVAL_JID, PROMPT_JID, INITIATOR_JID, PASSWORDS, SERVER, SCRAPER_JID, CRAWLER_JID
+    SEARCH_JID, EVAL_JID, PROMPT_JID, INITIATOR_JID, PASSWORDS, SERVER, SCRAPER_JID, CRAWLER_JID, LOG_DIR
 )
 from agents.query_initiator import QueryInitiatorAgent
 from agents.searcher import SearchAgent
@@ -8,9 +8,16 @@ from agents.evaluator import EvaluationAgent
 from agents.prompt_manager import PromptAgent
 #from agents.scrapper import ScraperAgent 
 from agents.crawler import CrawlerAgent
-
+import os
+import logging
+from logging.handlers import RotatingFileHandler
+from utils.logging import configure_logging
 
 async def main():
+    
+    current_log = configure_logging()
+    logger = logging.getLogger(__name__)
+    
     search_agent = SearchAgent(SEARCH_JID, PASSWORDS[SEARCH_JID])
     eval_agent = EvaluationAgent(EVAL_JID, PASSWORDS[EVAL_JID])
     prompt_agent = PromptAgent(PROMPT_JID, PASSWORDS[PROMPT_JID])

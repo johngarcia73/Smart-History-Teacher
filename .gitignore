@@ -1,2 +1,8 @@
 /venv/
 /.env
+*.txt
+*.log
+*.pyc
+*.pyc
+*.onnx
+*.json

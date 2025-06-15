@@ -2,20 +2,15 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import asyncio
-import logging
+from utils.logging import configure_logging
 from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour
 import re
+import logging
 from urllib.parse import urlparse, parse_qs, quote, unquote
 
 # Configuración del logger
-logger = logging.getLogger("CrawlerAgentLogger")
-logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+logger = logging.getLogger(__name__)
 
 #############################################
 # Búsqueda y Scraping Ultra-Simplificado (CORREGIDO)

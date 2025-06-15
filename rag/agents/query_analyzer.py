@@ -7,7 +7,7 @@ class QueryAnalyzer:
             self.nlp = spacy.load("es_core_news_sm")
             print("Termine de instanciar QueryAnalyzer")
         except:
-            raise ImportError("Modelo de spaCy para español no instalado. Ejecuta: python -m spacy download es_core_news_sm")
+            raise ImportError("Modelo de spaCy para español no instalado.")
     
     def analyze(self, query):
         doc = self.nlp(query)

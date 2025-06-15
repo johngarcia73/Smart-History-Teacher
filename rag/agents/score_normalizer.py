@@ -15,7 +15,7 @@ class ScoreNormalizer:
         return [(s - min_val) / (max_val - min_val) for s in scores]
     
     def robust_scale(self, scores):
-        """Escalado robusto usando IQR (menos sensible a outliers)"""
+        """Escalado robusto usando IQR"""
         if len(scores) < 4:
             return self.minmax_scale(scores)
             
