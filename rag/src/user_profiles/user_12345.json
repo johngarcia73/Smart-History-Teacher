@@ -1,0 +1,27 @@
+{
+  "user_id": "user_12345",
+  "created_at": "2025-06-14T00:41:55.939082",
+  "last_updated": "2025-06-14T00:41:56.052090",
+  "preferences": {
+    "humor": 0.8,
+    "formality": 0.3,
+    "communication_style": "gossip_jokes",
+    "preferred_topics": [
+      "IA",
+      "rob\u00f3tica"
+    ],
+    "disliked_topics": []
+  },
+  "interaction_history": {
+    "total_interactions": 5,
+    "last_interaction": null,
+    "preferred_response_types": [
+      "humor",
+      "analog\u00edas"
+    ]
+  },
+  "metadata": {
+    "is_new_user": false,
+    "profile_version": "1.0"
+  }
+}

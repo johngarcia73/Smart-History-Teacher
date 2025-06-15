@@ -5,3 +5,5 @@ oauthlib
 logging
 numpy
 spacy
+scrapy
+nltkpip i
