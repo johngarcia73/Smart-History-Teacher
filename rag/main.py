@@ -12,12 +12,16 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from utils.logging import configure_logging
+from ontology.ontology import OntologyManager
+
+
+print("Ontología histórica construida exitosamente!")
 
 async def main():
     
     current_log = configure_logging()
     logger = logging.getLogger(__name__)
-    
+        
     search_agent = SearchAgent(SEARCH_JID, PASSWORDS[SEARCH_JID])
     eval_agent = EvaluationAgent(EVAL_JID, PASSWORDS[EVAL_JID])
     prompt_agent = PromptAgent(PROMPT_JID, PASSWORDS[PROMPT_JID])

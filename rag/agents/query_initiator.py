@@ -12,8 +12,10 @@ class QueryInitiatorAgent(Agent):
     class QueryBehaviour(OneShotBehaviour):
         async def run(self):
             queries = [
-                "¿De cuántos estados está compuesta la república?",
-                "¿Quién fue Telémaco?"
+                #"¿De cuántos estados está compuesta la república?",
+                #"Logros militares de Napoleón Bonaparte"
+                #"El guerrero más destacado de la batalla de Notre Dame"
+                "Cómo fue la Revolución Francesa?"
             ]
             
             logger = logging.getLogger(__name__)

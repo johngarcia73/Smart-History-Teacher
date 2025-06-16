@@ -44,31 +44,48 @@ class PromptAgent(Agent):
                 "Respuesta:"
             )
             
-            url = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
-            headers = {"Authorization": f"Bearer {self.agent.hf_api_token}"}
-            payload = {
-                "inputs": prompt,
-                "parameters": {
-                    "return_full_text": False,
-                    "max_new_tokens": max_new_tokens,
-                    "num_beams": num_beams,
-                    "early_stopping": True
-                }
-            }
             
             for attempt in range(max_retries):
                 try:
-                    response = requests.post(url, headers=headers, json=payload)
-                    if response.status_code == 200:
-                        result = response.json()
-                        return result[0].get("generated_text", str(result)).strip()
-                    elif response.status_code == 503:
-                        await asyncio.sleep(15 * (attempt + 1))
-                    else:
-                        print(f"Error en generación: {response.status_code} - {response.text}")
-                        await asyncio.sleep(5)
+                    response = send_request(prompt)
+                    result = parse_response(response)
+                    return result
                 except Exception as e:
                     print(f"Error en conexión: {str(e)}")
                     await asyncio.sleep(5)
             
             return "No se pudo generar una respuesta. Por favor intenta nuevamente."
+        
+def call_endpoint(body):
+    headers = {
+        "Authorization": f"Bearer sk-0iV3NeVrYrdTYJsyEeygFZ3DyatEv6F9q6v8GDdC52KDADbZ",
+        "Content-Type": "application/json"
+    }
+    response = requests.post("https://apigateway.avangenio.net/chat/completions", headers=headers, json=body)
+    response.raise_for_status()  # Lanza una excepción si hay algún error
+    return response.json()
+
+def parse_response(response_data):
+    # Se busca el campo "message" en la raíz.
+    if "message" in response_data and isinstance(response_data["message"], dict) and "content" in response_data["message"]:
+        return response_data["message"]["content"]
+    # Sino, se revisa dentro de "choices"
+    if ("choices" in response_data and isinstance(response_data["choices"], list) and len(response_data["choices"]) > 0):
+        first_choice = response_data["choices"][0]
+        if ("message" in first_choice and isinstance(first_choice["message"], dict) and "content" in first_choice["message"]):
+            return first_choice["message"]["content"]
+    # Si no se encuentra la estructura deseada, retornar el JSON completo como cadena
+    return json.dumps(response_data)
+
+def send_request(prompt):
+    body = {
+        "model": "free",
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        "stream": False
+    }
+    return call_endpoint(body)

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Búsqueda y Scraping Ultra-Simplificado (CORREGIDO)
 #############################################
 
-def simple_search(query, limit=5):
+def simple_search(query, limit=100):
     """Búsqueda directa con extracción precisa"""
     logger.info(f"Buscando: '{query}'")
     try:
@@ -146,7 +146,7 @@ class CrawlerAgent(Agent):
                 try:
                     data = json.loads(msg.body)
                     query = data["query"]
-                    max_chunks = data.get("max_chunks", 5)
+                    max_chunks = data.get("max_chunks", 40)
                     
                     logger.info(f"Solicitud recibida para: '{query}'")
                     scraped_data = await simple_scrape_web(query, max_chunks)

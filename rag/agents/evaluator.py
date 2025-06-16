@@ -143,7 +143,7 @@ class EvaluationAgent(Agent):
                 ranked_candidates.sort(key=lambda x: x["final_score"], reverse=True)
                 max_score = max(c["final_score"] for c in ranked_candidates)
                 max_list.append(max_score)
-                #logger.info(f"EvaluationBehaviour: max final_score = {max_score:.2f}")
+                logger.info(f"EvaluationBehaviour: max final_score = {max_score:.2f}")
 
                 if max_score < CONFIDENCE_THRESHOLD:
                     await self.trigger_scraping(query, ranked_candidates, original_sender)
