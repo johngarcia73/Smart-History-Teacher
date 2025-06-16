@@ -36,6 +36,7 @@ class MoodleAPI:
         self.USER_ID = os.getenv("Moodle_ITS_ID")
         self.ENDPOINT = f"{os.getenv("url")}/webservice/rest/server.php"
         self.ROLE_STUDENT = 5
+        self.last_messages={}
 
     def _make_request(self, wsfunction, params):
         base_params = {
@@ -54,8 +55,8 @@ class MoodleAPI:
             print(f"Error en la petición a Moodle: {e}")
             return None
 
-    def get_messages(self):
-        """Obtiene todos los mensajes nuevos del usuario"""
+    def get_conversations(self):
+        """Obtiene todos las conversaciones  del usuario"""
         try:
             conversations = self._make_request(
                 'core_message_get_conversations',
@@ -64,30 +65,57 @@ class MoodleAPI:
             
             if 'exception' in conversations:
                 return None
-
-            all_messages = {}
-            for conv in conversations.get("conversations", []):
-                messages = self._make_request(
-                    'core_message_get_conversation_messages',
-                    {'currentuserid': self.USER_ID, 'convid': conv['id']}
-                )
-                if messages and 'messages' in messages:
-                    all_messages[conv['id']]=messages['messages']
-            return all_messages
+            
+            return conversations
         except Exception as e:
             print(f"Error obteniendo mensajes: {e}")
             return None
-
-    def send_messages(self, message, conversation_id):
+    def get_messages(self):
+        """Obtiene los mensajes nuevos del usario"""
+        conversations= self.get_conversations()
+        all_messages = {}
+        for conv in conversations.get("conversations", []):
+            if not conv["id"] in self.last_messages:
+                self.last_messages[conv["id"]]=0
+            messages = self._make_request(
+                'core_message_get_conversation_messages',
+                {
+                 'currentuserid': self.USER_ID, 
+                 'convid': conv['id'],
+                 'limitfrom':self.USER_ID,
+                 'limitnum': 1,
+                 'timefrom': self.last_messages[conv["id"]]
+                }
+            )
+            if messages and 'messages' in messages:
+                all_messages[conv['id']]=messages['messages']
+        return all_messages
+    def send_messages(self, message, conversation_id,timecreated):
         """Envía múltiples mensajes a una conversación"""
         params = {'conversationid': conversation_id}
         params['messages[0][text]'] = message
         params['messages[0][textformat]'] = 0
+        self.last_messages[conversation_id]=timecreated+1
         return self._make_request(
             'core_message_send_messages_to_conversation',
             params
         )
-
+    def Block_User(self,user_blocked):
+        return self._make_request(
+            'core_message_block_user',
+            {
+                'userid': self.USER_ID,
+                'blockeduserid': user_blocked           
+            }
+        )
+    def Unblock_User(self,user_unblocked):
+       return self._make_request(
+           'core_message_unblock_user',
+           {
+               'userid': self.USER_ID,
+               'unblockeduserid': user_unblocked           
+           }
+       )
     def create_course(self, course_data):
         """Crea un nuevo curso"""
         return self._make_request(
@@ -109,9 +137,11 @@ class MoodleMonitorBehaviour(PeriodicBehaviour):
         messages = self.agent.moodle_api.get_messages()
         for id in messages:
             #msg= self.send_User_Data_to_Profile(messages[id])
-            msg= Message(to="profileManageragent@localhost",body= f"{id}",metadata={"phase":"profile"})
+            msg= Message(to="profilemanageragent@localhost",body= f"{id}",metadata={"phase":"profile"})
             await self.send(msg)
             for message in messages[id]:
+                
+                self.agent.moodle_api.Block_User(message['useridfrom'])
                 if message['text']:
                     msg = Message(
                         to="search_agent@localhost",
@@ -127,6 +157,7 @@ class MoodleMonitorBehaviour(PeriodicBehaviour):
                     if performative == "final":
                         body = json.loads(msg.body)
                         final_answer = body.get("final_answer", "")
-                        self.agent.moodle_api.send_messages(final_answer,id)
+                        self.agent.moodle_api.send_messages(final_answer,id,message['timecreated'])
+                        self.agent.moodle_api.Unblock_User(message['useridfrom'])
     #def send_User_Data_to_Profile(id):
         

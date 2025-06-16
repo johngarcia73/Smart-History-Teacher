@@ -16,7 +16,7 @@ class PromptAgent(Agent):
 
     class PromptBehaviour(CyclicBehaviour):
         async def run(self):
-            msg = await self.receive()
+            msg = await self.receive(20)
             if msg and msg.get_metadata("phase")== "params":
                 self.agent.params= json.loads(msg.body)
             elif msg and msg.get_metadata("phase") == "prompt":

@@ -1,27 +1,29 @@
 from spade.agent import Agent
 from spade.message import Message
 from spade.behaviour import CyclicBehaviour
+from spade.template import Template
 from ..UserProfileManager import UserProfileManager
 import numpy as np
 import json
-class ProfileManagerAgent(Agent):
+class profilemanageragent(Agent):
     
     def __init__(self, jid, password):
         super().__init__(jid, password)
         self.ProfileManager= UserProfileManager()
     async def setup(self):
+        template = Template(metadata={"phase": "profile"})
         handleProfile= HandleProfileBehaviour()
-        self.add_behaviour(handleProfile)
+        self.add_behaviour(handleProfile,template)
 
 
         pass
 class HandleProfileBehaviour(CyclicBehaviour):
     async def run(self) :
         
-        msg = await self.receive()
+        msg = await self.receive(50)
         if msg:
-            User_Profile= self.ProfileManager.get_profile(msg.body)
-            params= self.get_llm_parameters(User_Profile)
+            User_Profile= self.agent.ProfileManager.get_profile(msg.body)
+            params=  await self.get_llm_parameters(User_Profile)
             send_msg= Message(
                 to="prompt_agent@localhost",
                 body=json.dumps(params),
@@ -36,7 +38,7 @@ class HandleProfileBehaviour(CyclicBehaviour):
         history_prefs = profile['preferences']['history_specific']
         topic_prefs = profile['preferences']['topics']
         # Parámetros principales para el LLM
-        def _calculate_temperature(self, prefs, history):
+        def _calculate_temperature(prefs, history):
             """
             Calcula el parámetro de temperatura para el LLM
             Rango: 0.0 (más determinista) a 1.0 (más creativo)
@@ -52,7 +54,7 @@ class HandleProfileBehaviour(CyclicBehaviour):
             elif engagement > 0.7:
                 temp_adjust += 0.1  # Más creativo para usuarios comprometidos
             return np.clip(base_temp + temp_adjust, 0.1, 1.0)
-        def _calculate_top_p(self, prefs):
+        def _calculate_top_p(prefs):
             """
             Calcula el parámetro top_p (nucleus sampling)
             Rango: 0.5 (más enfocado) a 1.0 (más diverso)
@@ -60,7 +62,7 @@ class HandleProfileBehaviour(CyclicBehaviour):
             # Usuarios que prefieren formalidad quieren respuestas más enfocadas
             formality = prefs.get('formality', 0.5)
             return 0.9 - (formality * 0.4)
-        def _calculate_repetition_penalty(self, history):
+        def _calculate_repetition_penalty(history):
             """
             Calcula la penalización por repetición
             Rango: 1.0 (sin penalización) a 2.0 (máxima penalización)
@@ -68,7 +70,7 @@ class HandleProfileBehaviour(CyclicBehaviour):
             # Usuarios con mucho engagement pueden tolerar más repetición
             engagement = history.get('avg_engagement', 0.5)
             return 1.2 + (0.6 * (1 - engagement))
-        def _calculate_max_length(self, history):
+        def _calculate_max_length(history):
             """
             Calcula la longitud máxima de respuesta
             Rango: 50-500 tokens

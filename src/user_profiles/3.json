@@ -1,0 +1,42 @@
+{
+  "user_id": "3",
+  "created_at": "2025-06-15T16:20:11.189392",
+  "last_updated": "2025-06-15T16:20:11.189392",
+  "preferences": {
+    "communication": {
+      "humor": 0.5,
+      "formality": 0.5,
+      "style": "neutral",
+      "tone": "neutral"
+    },
+    "history_specific": {
+      "historiographical_approach": "social",
+      "source_criticism": "intermediate",
+      "evidence_preference": [
+        "primary",
+        "visual"
+      ],
+      "controversy_handling": "neutral",
+      "temporal_focus": "thematic"
+    },
+    "topics": {
+      "preferred": [],
+      "disliked": [],
+      "affinity": {}
+    }
+  },
+  "interaction_history": {
+    "total_interactions": 0,
+    "last_interaction": null,
+    "preferred_response_types": [],
+    "engagement_metrics": {
+      "avg_engagement": 0.5,
+      "last_engagement": 0.5
+    }
+  },
+  "metadata": {
+    "is_new_user": true,
+    "profile_version": "2.0",
+    "optimization_status": "unoptimized"
+  }
+}

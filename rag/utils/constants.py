@@ -5,7 +5,7 @@ PROMPT_JID = "prompt_agent@localhost"
 SCRAPER_JID = "scrapper_agent@localhost"
 CRAWLER_JID = "crawler_agent@localhost"   
 MOODLE_JID = "moodle_agent@localhost"
-PROFILE_JID="profileManageragent@localhost"
+PROFILE_JID="profilemanageragent@localhost"
 
 INDEX_FILE = "faiss_index.bin"
 METADATA_FILE = "chunk_metadata.pickle"

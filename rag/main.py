@@ -9,7 +9,7 @@ from agents.prompt_manager import PromptAgent
 #from agents.scrapper import ScraperAgent 
 from agents.crawler import CrawlerAgent
 from Interface.MoodleAgent import MoodleAgent
-from src.agents.ProfileManager import ProfileManagerAgent
+from src.agents.ProfileManager import profilemanageragent
 import os
 import logging
 from logging.handlers import RotatingFileHandler
@@ -31,7 +31,7 @@ async def main():
     crawler_agent = CrawlerAgent(CRAWLER_JID, PASSWORDS[CRAWLER_JID])
     #initiator = QueryInitiatorAgent(INITIATOR_JID, PASSWORDS[INITIATOR_JID])
     Moodle_Agent= MoodleAgent(MOODLE_JID,PASSWORDS[MOODLE_JID])
-    profile_Agent=ProfileManagerAgent(PROFILE_JID,PASSWORDS[PROFILE_JID])
+    profile_Agent=profilemanageragent(PROFILE_JID,PASSWORDS[PROFILE_JID])
     
     await prompt_agent.start(auto_register=True)
     await search_agent.start(auto_register=True)

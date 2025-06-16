@@ -1,0 +1,42 @@
+{
+  "user_id": "3",
+  "created_at": "2025-06-15T16:13:51.500969",
+  "last_updated": "2025-06-15T16:13:51.500969",
+  "preferences": {
+    "communication": {
+      "humor": 1.0,
+      "formality": 0.5,
+      "style": "gossip_jokes",
+      "tone": "neutral"
+    },
+    "history_specific": {
+      "historiographical_approach": "social",
+      "source_criticism": "low",
+      "evidence_preference": [
+        "primary",
+        "visual"
+      ],
+      "controversy_handling": "neutral",
+      "temporal_focus": "thematic"
+    },
+    "topics": {
+      "preferred": ["Games"],
+      "disliked": [],
+      "affinity": {}
+    }
+  },
+  "interaction_history": {
+    "total_interactions": 0,
+    "last_interaction": null,
+    "preferred_response_types": [],
+    "engagement_metrics": {
+      "avg_engagement": 0.5,
+      "last_engagement": 0.5
+    }
+  },
+  "metadata": {
+    "is_new_user": true,
+    "profile_version": "2.0",
+    "optimization_status": "unoptimized"
+  }
+}
