@@ -4,14 +4,21 @@ from spade.agent import Agent
 from spade.behaviour import OneShotBehaviour
 from spade.message import Message
 from utils.constants import SEARCH_JID, EVAL_JID, PROMPT_JID, PASSWORDS
-
+from utils.testingquestions import testingqueries
+from agents.evaluator import max_list
+import numpy as np
+import logging
 class QueryInitiatorAgent(Agent):
     class QueryBehaviour(OneShotBehaviour):
         async def run(self):
             queries = [
-                "¿De cuántos estados está compuesta la república?",
-                "¿De qué va el libro de Carlos V?"
+                #"¿De cuántos estados está compuesta la república?",
+                #"Logros militares de Napoleón Bonaparte"
+                #"El guerrero más destacado de la batalla de Notre Dame"
+                "Cómo fue la Revolución Francesa?"
             ]
+            
+            logger = logging.getLogger(__name__)
             
             for query in queries:
                 msg = Message(to=SEARCH_JID)
@@ -41,6 +48,7 @@ class QueryInitiatorAgent(Agent):
                 
                 await asyncio.sleep(3)
                 
+            #logger.info(f"La media de score es con sliding window {np.mean(max_list)}")
             await self.agent.stop()
 
     async def setup(self):

@@ -9,19 +9,12 @@ import re
 from urllib.parse import urlparse, parse_qs, quote, unquote
 
 # Configuración del logger
-logger = logging.getLogger("CrawlerAgentLogger")
-logger.setLevel(logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
-
+logger = logging.getLogger(__name__)
 #############################################
 # Búsqueda y Scraping Ultra-Simplificado (CORREGIDO)
 #############################################
 
-def simple_search(query, limit=5):
+def simple_search(query, limit=100):
     """Búsqueda directa con extracción precisa"""
     logger.info(f"Buscando: '{query}'")
     try:
@@ -81,7 +74,7 @@ def simple_search(query, limit=5):
         return []
 
 def simple_scrape(url, max_chunks=3):
-    """Extracción de texto crudo sin complicaciones"""
+    """Extracción de texto crudo"""
     try:
         logger.info(f"Scrapeando: {url}")
         
@@ -92,7 +85,6 @@ def simple_scrape(url, max_chunks=3):
         response = requests.get(url, headers=headers, timeout=20)
         response.raise_for_status()
         
-        # Extraer texto simple
         soup = BeautifulSoup(response.text, 'html.parser')
         
         # Eliminar elementos no deseados
@@ -123,14 +115,12 @@ def simple_scrape(url, max_chunks=3):
         return []
 
 async def simple_scrape_web(query, max_chunks=5):
-    """Proceso completo simplificado"""
+    """Para testear"""
     logger.info(f"Iniciando scraping para: '{query}'")
     
-    # Paso 1: Buscar URLs
     urls = simple_search(query)
     logger.info(f"Encontradas {len(urls)} URLs")
     
-    # Paso 2: Scrapear cada URL
     all_chunks = []
     for url in urls:
         chunks = simple_scrape(url, max_chunks - len(all_chunks))
@@ -156,7 +146,7 @@ class CrawlerAgent(Agent):
                 try:
                     data = json.loads(msg.body)
                     query = data["query"]
-                    max_chunks = data.get("max_chunks", 5)
+                    max_chunks = data.get("max_chunks", 40)
                     
                     logger.info(f"Solicitud recibida para: '{query}'")
                     scraped_data = await simple_scrape_web(query, max_chunks)

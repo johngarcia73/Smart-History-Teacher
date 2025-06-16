@@ -13,7 +13,10 @@ from utils.constants import METADATA_FILE, PROMPT_JID, SCORE_THRESHOLD, SCRAPER_
 from utils.helpers import safe_json_dumps
 from agents.query_analyzer import QueryAnalyzer
 from agents.score_normalizer import ScoreNormalizer
+import logging
 
+logger = logging.getLogger(__name__)
+max_list = []
 class EvaluationAgent(Agent):
     def __init__(self, jid, password):
         super().__init__(jid, password)
@@ -39,37 +42,38 @@ class EvaluationAgent(Agent):
         self.add_behaviour(self.EvaluationBehaviour(), eval_template)
         self.add_behaviour(self.ScraperResponseBehaviour(), scrape_template)
         
-        print(f"{self.jid} iniciado correctamente")
+        logger.info(f"{self.jid} iniciado correctamente")
 
     class EvaluationBehaviour(CyclicBehaviour):
         async def trigger_scraping(self, query, candidates, original_sender):
             """Activa scraping cuando la confianza es baja"""
             max_score = max(c["final_score"] for c in candidates)
+            
+            
             if max_score < CONFIDENCE_THRESHOLD:
-                print(f"EvaluationAgent: Confianza baja ({max_score:.2f}), solicitando scraping")
+               logger.info(f"EvaluationAgent: Confianza baja ({max_score:.2f}), solicitando scraping")
                 
                 # Guardar estado de la consulta
-                self.agent.pending_queries[query] = {
-                    "candidates": candidates,
-                    "timestamp": time.time(),
-                    "sender": str(original_sender)
-                }
-                
-                scrape_msg = Message(to=CRAWLER_JID)
-                scrape_msg.set_metadata("phase", "scrape_request")
-                scrape_msg.body = safe_json_dumps({
-                    "query": query,
-                    "max_chunks": 10
-                })
-                await self.send(scrape_msg)
-            else:
-                await self.send_to_prompt(query, candidates, original_sender)
+            self.agent.pending_queries[query] = {
+                "candidates": candidates,
+                "timestamp": time.time(),
+                "sender": str(original_sender)
+            }
+            
+            scrape_msg = Message(to=CRAWLER_JID)
+            scrape_msg.set_metadata("phase", "scrape_request")
+            scrape_msg.body = safe_json_dumps({
+                "query": query,
+                "max_chunks": 10
+            })
+            #else:
+            await self.send(scrape_msg)
 
         async def send_to_prompt(self, query, candidates, original_sender):
             """Envía los mejores resultados al PromptAgent"""
             sorted_candidates = sorted(candidates, key=lambda c: c["final_score"], reverse=True)[:5]
             context = " ".join(c["text"] for c in sorted_candidates)
-            
+                        
             # Determinar fuentes según si existen datos de scraping
             sources = "local"
             if any(c.get("source") == "wikipedia" for c in sorted_candidates):
@@ -84,14 +88,15 @@ class EvaluationAgent(Agent):
                 "sources": sources
             })
             await self.send(msg)
-            print(f"EvaluationAgent: Contexto enviado a PromptAgent para '{query}'")
+            logger.info(f"EvaluationAgent: Contexto enviado a PromptAgent para '{query}'")
 
+#################
         async def run(self):
             msg = await self.receive(timeout=10)
             if not msg:
                 return
 
-            print(f"EvaluationAgent: Mensaje recibido de {msg.sender}")
+            #logger.info(f"EvaluationAgent: Mensaje recibido de {msg.sender}")
             try:
                 data = json.loads(msg.body)
                 query = data.get("query", "")
@@ -104,7 +109,7 @@ class EvaluationAgent(Agent):
                 query_tokens = word_tokenize(query.lower(), language='spanish')
 
                 query_type = self.agent.query_analyzer.analyze(query)
-                print(f"EvaluationAgent: Tipo de consulta '{query_type}' para: '{query}'")
+                #logger.info(f"EvaluationAgent: Tipo de consulta '{query_type}' para: '{query}'")
 
                 # Se usa la fórmula 1/(1+d)
                 faiss_raw_scores = [1.0 / (1.0 + c["distance"]) for c in candidates]
@@ -117,9 +122,7 @@ class EvaluationAgent(Agent):
                     candidate_index = candidate.get("id", i)
                     candidate_bm25_scores.append(bm25_full_scores[candidate_index])
                 bm25_norm = self.agent.score_normalizer.sigmoid_scale(candidate_bm25_scores, a=10)
-
-
-
+                
 
                 ranked_candidates = []
                 for i, candidate in enumerate(candidates):
@@ -139,15 +142,17 @@ class EvaluationAgent(Agent):
 
                 ranked_candidates.sort(key=lambda x: x["final_score"], reverse=True)
                 max_score = max(c["final_score"] for c in ranked_candidates)
-                print(f"EvaluationBehaviour: max final_score = {max_score:.2f}")
+                max_list.append(max_score)
+                logger.info(f"EvaluationBehaviour: max final_score = {max_score:.2f}")
 
                 if max_score < CONFIDENCE_THRESHOLD:
                     await self.trigger_scraping(query, ranked_candidates, original_sender)
                 else:
                     await self.send_to_prompt(query, ranked_candidates, original_sender)
                 
+                
             except Exception as e:
-                print(f"EvaluationBehaviour ERROR: {str(e)}")
+                logger.warning(f"EvaluationBehaviour ERROR: {str(e)}")
                 import traceback
                 traceback.print_exc()
 
@@ -157,7 +162,7 @@ class EvaluationAgent(Agent):
             if not msg:
                 return
                 
-            print("EvaluationAgent: Respuesta de scraper recibida")
+            logger.info("EvaluationAgent: Respuesta de scraper recibida")
             try:
                 data = json.loads(msg.body)
                 query = data["query"]
@@ -165,14 +170,14 @@ class EvaluationAgent(Agent):
                 
                 # Recuperar estado de la consulta
                 if query not in self.agent.pending_queries:
-                    print(f"ScraperResponse: Consulta '{query}' no encontrada en pendientes")
+                    logger.warning(f"ScraperResponse: Consulta '{query}' no encontrada en pendientes")
                     return
                     
                 state = self.agent.pending_queries.pop(query)
                 candidates = state["candidates"]
                 original_sender = state["sender"]
                 
-                print(f"ScraperResponse: Recibidos {len(scraped_chunks)} chunks para '{query}'")
+                logger.info(f"ScraperResponse: Recibidos {len(scraped_chunks)} chunks para '{query}'")
                 
                 # Combinar resultados locales con datos externos:
                 combined_candidates = candidates[:3]  # Mejores candidatos locales
@@ -200,10 +205,10 @@ class EvaluationAgent(Agent):
                     "sources": "local+wikipedia"
                 })
                 await self.send(prompt_msg)
-                print(f"EvaluationAgent: Contexto mejorado enviado a PromptAgent para '{query}'")
+                logger.info(f"EvaluationAgent: Contexto mejorado enviado a PromptAgent para '{query}'")
                 
             except Exception as e:
-                print(f"ScraperResponse ERROR: {str(e)}")
+                logger.warning(f"ScraperResponse ERROR: {str(e)}")
                 import traceback
                 traceback.print_exc()
 

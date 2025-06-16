@@ -1,0 +1,475 @@
+@prefix ent: <http://tutorhistoria.org/entities/> .
+@prefix hist: <http://tutorhistoria.org/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ent:Abraham_Lincoln a hist:Personaje ;
+    rdfs:label "Abraham Lincoln" ;
+    hist:descripcion "Presidente estadounidense" ;
+    hist:fechaFallecimiento "1865" ;
+    hist:fechaNacimiento "1809" .
+
+ent:Alejandro_Magno a hist:Personaje ;
+    rdfs:label "Alejandro Magno" ;
+    hist:descripcion "Rey macedonio" ;
+    hist:fechaFallecimiento "-323" ;
+    hist:fechaNacimiento "-356" .
+
+ent:Atenas a hist:Ubicacion ;
+    rdfs:label "Atenas" ;
+    hist:continente "Europa" ;
+    hist:tipoUbicacion "Ciudad griega" .
+
+ent:Carlomagno a hist:Personaje ;
+    rdfs:label "Carlomagno" ;
+    hist:descripcion "Emperador del Sacro Imperio" ;
+    hist:fechaFallecimiento "814" ;
+    hist:fechaNacimiento "742" .
+
+ent:Caída_Constantinopla a hist:EventoHistorico ;
+    rdfs:label "Caída Constantinopla" ;
+    hist:fechaInicio "1453" ;
+    hist:ocurreEn hist:Edad_Moderna ;
+    hist:tieneLugar ent:Constantinopla ;
+    hist:tieneParticipante ent:Constantino_XI .
+
+ent:Caída_Imperio_Romano_Oeste a hist:EventoHistorico ;
+    rdfs:label "Caída Imperio Romano Oeste" ;
+    hist:fechaInicio "476" ;
+    hist:ocurreEn hist:Edad_Media ;
+    hist:tieneLugar ent:Roma ;
+    hist:tieneParticipante ent:Rómulo_Augústulo .
+
+ent:Caída_Muro_Berlín a hist:EventoHistorico ;
+    rdfs:label "Caída Muro Berlín" ;
+    hist:fechaInicio "1989" ;
+    hist:parteDe hist:Guerra_Fría ;
+    hist:tieneLugar ent:Berlín ;
+    hist:tieneParticipante ent:Mijaíl_Gorbachov .
+
+ent:Construcción_Pirámides_Giza a hist:EventoHistorico ;
+    rdfs:label "Construcción Pirámides Giza" ;
+    hist:fechaInicio "-2560" ;
+    hist:ocurreEn hist:Edad_Antigua ;
+    hist:tieneLugar ent:Egipto,
+        ent:Guiza ;
+    hist:tieneParticipante ent:Faraón_Keops .
+
+ent:Democracia hist:originadoEn ent:Civilización_Griega .
+
+ent:Derechos_Humanos hist:consolidadoEn ent:Revolución_Francesa .
+
+ent:Descubrimiento_de_América a hist:EventoHistorico ;
+    rdfs:label "Descubrimiento de América" ;
+    hist:fechaInicio "1492" ;
+    hist:ocurreEn hist:Edad_Moderna ;
+    hist:tieneLugar ent:América,
+        ent:Guanahaní ;
+    hist:tieneParticipante ent:Cristóbal_Colón .
+
+ent:Fundación_de_Roma a hist:EventoHistorico ;
+    rdfs:label "Fundación de Roma" ;
+    hist:fechaInicio "-753" ;
+    hist:ocurreEn hist:Edad_Antigua ;
+    hist:tieneLugar ent:Roma ;
+    hist:tieneParticipante ent:Remo,
+        ent:Rómulo .
+
+ent:Guerras_Púnicas a hist:EventoHistorico ;
+    rdfs:label "Guerras Púnicas" ;
+    hist:fechaInicio "-264" ;
+    hist:ocurreEn hist:Edad_Antigua ;
+    hist:tieneLugar ent:Cartago,
+        ent:Roma ;
+    hist:tieneParticipante ent:Aníbal,
+        ent:Escipión_Africano .
+
+ent:Julio_César a hist:Personaje ;
+    rdfs:label "Julio César" ;
+    hist:descripcion "Dictador romano" ;
+    hist:fechaFallecimiento "-44" ;
+    hist:fechaNacimiento "-100" ;
+    hist:relacionadoCon ent:Cleopatra .
+
+ent:Leonardo_da_Vinci a hist:Personaje ;
+    rdfs:label "Leonardo da Vinci" ;
+    hist:descripcion "Artista renacentista" ;
+    hist:fechaFallecimiento "1519" ;
+    hist:fechaNacimiento "1452" .
+
+ent:Machu_Picchu a hist:Ubicacion ;
+    rdfs:label "Machu Picchu" ;
+    hist:continente "América" ;
+    hist:tipoUbicacion "Ciudad inca" .
+
+ent:Marie_Curie a hist:Personaje ;
+    rdfs:label "Marie Curie" ;
+    hist:descripcion "Científica pionera" ;
+    hist:fechaFallecimiento "1934" ;
+    hist:fechaNacimiento "1867" .
+
+ent:Mesopotamia a hist:Ubicacion ;
+    rdfs:label "Mesopotamia" ;
+    hist:continente "Asia" ;
+    hist:tipoUbicacion "Región histórica" .
+
+ent:Peste_Negra a hist:EventoHistorico ;
+    rdfs:label "Peste Negra" ;
+    hist:fechaInicio "1347" ;
+    hist:ocurreEn hist:Edad_Media ;
+    hist:tieneLugar ent:Europa .
+
+ent:Primera_Cruzada a hist:EventoHistorico ;
+    rdfs:label "Primera Cruzada" ;
+    hist:fechaInicio "1096" ;
+    hist:ocurreEn hist:Edad_Media ;
+    hist:tieneLugar ent:Jerusalén ;
+    hist:tieneParticipante ent:Godofredo_de_Bouillón .
+
+ent:Primera_Guerra_Mundial a hist:EventoHistorico ;
+    rdfs:label "Primera Guerra Mundial" ;
+    hist:causaDirecta ent:Segunda_Guerra_Mundial ;
+    hist:fechaInicio "1914" ;
+    hist:ocurreEn hist:Edad_Contemporanea ;
+    hist:tieneLugar ent:Europa ;
+    hist:tieneParticipante ent:Guillermo_II,
+        ent:Woodrow_Wilson .
+
+ent:Reforma_Protestante a hist:EventoHistorico ;
+    rdfs:label "Reforma Protestante" ;
+    hist:fechaInicio "1517" ;
+    hist:ocurreEn hist:Edad_Moderna ;
+    hist:parteDe hist:Renacimiento ;
+    hist:tieneLugar ent:Wittenberg ;
+    hist:tieneParticipante ent:Martín_Lutero .
+
+ent:Revolución_Científica a hist:EventoHistorico ;
+    rdfs:label "Revolución Científica" ;
+    hist:fechaInicio "1543" ;
+    hist:tieneLugar ent:Europa ;
+    hist:tieneParticipante ent:Galileo_Galilei,
+        ent:Isaac_Newton .
+
+ent:Revolución_Industrial a hist:EventoHistorico ;
+    rdfs:label "Revolución Industrial" ;
+    hist:contribuyoA ent:Imperialismo ;
+    hist:fechaInicio "1760" ;
+    hist:ocurreEn hist:Edad_Contemporanea ;
+    hist:tieneLugar ent:Inglaterra ;
+    hist:tieneParticipante ent:James_Watt .
+
+ent:Revolución_Neolítica a hist:EventoHistorico ;
+    rdfs:label "Revolución Neolítica" ;
+    hist:fechaInicio "-10000" ;
+    hist:ocurreEn hist:Prehistoria ;
+    hist:tieneLugar ent:Creciente_Fértil .
+
+ent:Simón_Bolívar a hist:Personaje ;
+    rdfs:label "Simón Bolívar" ;
+    hist:descripcion "Libertador americano" ;
+    hist:fechaFallecimiento "1830" ;
+    hist:fechaNacimiento "1783" ;
+    hist:influenciadoPor ent:Napoleón_Bonaparte .
+
+ent:Tenochtitlán a hist:Ubicacion ;
+    rdfs:label "Tenochtitlán" ;
+    hist:continente "América" ;
+    hist:tipoUbicacion "Capital azteca" .
+
+ent:Valle_del_Indo a hist:Ubicacion ;
+    rdfs:label "Valle del Indo" ;
+    hist:continente "Asia" ;
+    hist:tipoUbicacion "Civilización antigua" .
+
+hist:Civilización_Egipcia a hist:Movimiento ;
+    rdfs:label "Civilización Egipcia" ;
+    hist:descripcion "Antiguo Egipto" ;
+    hist:finPeriodo -332 ;
+    hist:inicioPeriodo -3100 .
+
+hist:Civilización_Griega a hist:Movimiento ;
+    rdfs:label "Civilización Griega" ;
+    hist:descripcion "Antigua Grecia" ;
+    hist:finPeriodo -146 ;
+    hist:inicioPeriodo -800 .
+
+hist:Colonialismo a hist:Concepto ;
+    rdfs:label "Colonialismo" ;
+    hist:descripcion "Dominación territorial" .
+
+hist:Democracia a hist:Concepto ;
+    rdfs:label "Democracia" ;
+    hist:descripcion "Sistema de gobierno del pueblo" .
+
+hist:Derechos_Humanos a hist:Concepto ;
+    rdfs:label "Derechos Humanos" ;
+    hist:descripcion "Derechos fundamentales" .
+
+hist:Ilustración a hist:Movimiento ;
+    rdfs:label "Ilustración" ;
+    hist:descripcion "Movimiento intelectual" ;
+    hist:finPeriodo 1815 ;
+    hist:inicioPeriodo 1685 .
+
+hist:Imperio_Romano a hist:Movimiento ;
+    rdfs:label "Imperio Romano" ;
+    hist:descripcion "Roma antigua" ;
+    hist:finPeriodo 476 ;
+    hist:inicioPeriodo -27 .
+
+hist:Monarquía a hist:Concepto ;
+    rdfs:label "Monarquía" ;
+    hist:descripcion "Gobierno por reyes" .
+
+hist:República a hist:Concepto ;
+    rdfs:label "República" ;
+    hist:descripcion "Sistema representativo" .
+
+hist:Revolución_Industrial a hist:Movimiento ;
+    rdfs:label "Revolución Industrial" ;
+    hist:descripcion "Industrialización" ;
+    hist:finPeriodo 1840 ;
+    hist:inicioPeriodo 1760 .
+
+hist:Revolución_Neolítica a hist:Movimiento ;
+    rdfs:label "Revolución Neolítica" ;
+    hist:descripcion "Transición a agricultura" ;
+    hist:finPeriodo -3000 ;
+    hist:inicioPeriodo -10000 .
+
+hist:influenciadoPor a owl:ObjectProperty ;
+    rdfs:domain hist:EventoHistorico ;
+    rdfs:range hist:EventoHistorico .
+
+hist:influencio a owl:ObjectProperty ;
+    rdfs:domain hist:Personaje ;
+    rdfs:range hist:Personaje .
+
+hist:ocurreEn a owl:ObjectProperty ;
+    rdfs:domain hist:EventoHistorico ;
+    rdfs:range hist:Periodo .
+
+hist:tieneLugar a owl:ObjectProperty ;
+    rdfs:domain hist:EventoHistorico ;
+    rdfs:range hist:Ubicacion .
+
+hist:tieneParticipante a owl:ObjectProperty ;
+    rdfs:domain hist:EventoHistorico ;
+    rdfs:range hist:Personaje .
+
+ent:Adolf_Hitler a hist:Personaje ;
+    rdfs:label "Adolf_Hitler" .
+
+ent:América a hist:Ubicacion ;
+    rdfs:label "América" .
+
+ent:Aníbal a hist:Personaje ;
+    rdfs:label "Aníbal" .
+
+ent:Berlín a hist:Ubicacion ;
+    rdfs:label "Berlín" .
+
+ent:Boston a hist:Ubicacion ;
+    rdfs:label "Boston" .
+
+ent:Cartago a hist:Ubicacion ;
+    rdfs:label "Cartago" .
+
+ent:Cleopatra a hist:Personaje ;
+    rdfs:label "Cleopatra" ;
+    hist:descripcion "Última faraona" ;
+    hist:fechaFallecimiento "-30" ;
+    hist:fechaNacimiento "-69" .
+
+ent:Constantino_XI a hist:Personaje ;
+    rdfs:label "Constantino_XI" .
+
+ent:Constantinopla a hist:Ubicacion ;
+    rdfs:label "Constantinopla" .
+
+ent:Creciente_Fértil a hist:Ubicacion ;
+    rdfs:label "Creciente_Fértil" .
+
+ent:Cristóbal_Colón a hist:Personaje ;
+    rdfs:label "Cristóbal_Colón" .
+
+ent:Egipto a hist:Ubicacion ;
+    rdfs:label "Egipto" .
+
+ent:Escipión_Africano a hist:Personaje ;
+    rdfs:label "Escipión_Africano" .
+
+ent:Faraón_Keops a hist:Personaje ;
+    rdfs:label "Faraón_Keops" .
+
+ent:Filadelfia a hist:Ubicacion ;
+    rdfs:label "Filadelfia" .
+
+ent:Galileo_Galilei a hist:Personaje ;
+    rdfs:label "Galileo_Galilei" .
+
+ent:George_Washington a hist:Personaje ;
+    rdfs:label "George_Washington" .
+
+ent:Godofredo_de_Bouillón a hist:Personaje ;
+    rdfs:label "Godofredo_de_Bouillón" .
+
+ent:Guanahaní a hist:Ubicacion ;
+    rdfs:label "Guanahaní" .
+
+ent:Guillermo_II a hist:Personaje ;
+    rdfs:label "Guillermo_II" .
+
+ent:Guiza a hist:Ubicacion ;
+    rdfs:label "Guiza" .
+
+ent:Inglaterra a hist:Ubicacion ;
+    rdfs:label "Inglaterra" .
+
+ent:Isaac_Newton a hist:Personaje ;
+    rdfs:label "Isaac_Newton" .
+
+ent:James_Watt a hist:Personaje ;
+    rdfs:label "James_Watt" .
+
+ent:Jerusalén a hist:Ubicacion ;
+    rdfs:label "Jerusalén" .
+
+ent:Luis_XVI a hist:Personaje ;
+    rdfs:label "Luis_XVI" .
+
+ent:Martín_Lutero a hist:Personaje ;
+    rdfs:label "Martín_Lutero" .
+
+ent:Mijaíl_Gorbachov a hist:Personaje ;
+    rdfs:label "Mijaíl_Gorbachov" .
+
+ent:Pacífico a hist:Ubicacion ;
+    rdfs:label "Pacífico" .
+
+ent:París a hist:Ubicacion ;
+    rdfs:label "París" .
+
+ent:Remo a hist:Personaje ;
+    rdfs:label "Remo" .
+
+ent:Revolución_Americana a hist:EventoHistorico ;
+    rdfs:label "Revolución Americana" ;
+    hist:fechaInicio "1775" ;
+    hist:tieneLugar ent:Boston,
+        ent:Filadelfia ;
+    hist:tieneParticipante ent:George_Washington,
+        ent:Thomas_Jefferson .
+
+ent:Revolución_Francesa a hist:EventoHistorico ;
+    rdfs:label "Revolución Francesa" ;
+    hist:fechaInicio "1789" ;
+    hist:influenciadoPor ent:Revolución_Americana ;
+    hist:ocurreEn hist:Edad_Contemporanea ;
+    hist:tieneLugar ent:París,
+        ent:Versalles ;
+    hist:tieneParticipante ent:Luis_XVI,
+        ent:Napoleón_Bonaparte,
+        ent:Robespierre .
+
+ent:Robespierre a hist:Personaje ;
+    rdfs:label "Robespierre" .
+
+ent:Rómulo a hist:Personaje ;
+    rdfs:label "Rómulo" .
+
+ent:Rómulo_Augústulo a hist:Personaje ;
+    rdfs:label "Rómulo_Augústulo" .
+
+ent:Segunda_Guerra_Mundial a hist:EventoHistorico ;
+    rdfs:label "Segunda Guerra Mundial" ;
+    hist:fechaInicio "1939" ;
+    hist:ocurreEn hist:Edad_Contemporanea ;
+    hist:tieneLugar ent:Europa,
+        ent:Pacífico ;
+    hist:tieneParticipante ent:Adolf_Hitler,
+        ent:Winston_Churchill .
+
+ent:Thomas_Jefferson a hist:Personaje ;
+    rdfs:label "Thomas_Jefferson" .
+
+ent:Versalles a hist:Ubicacion ;
+    rdfs:label "Versalles" .
+
+ent:Winston_Churchill a hist:Personaje ;
+    rdfs:label "Winston_Churchill" .
+
+ent:Wittenberg a hist:Ubicacion ;
+    rdfs:label "Wittenberg" .
+
+ent:Woodrow_Wilson a hist:Personaje ;
+    rdfs:label "Woodrow_Wilson" .
+
+hist:Prehistoria a hist:Periodo,
+        owl:Class ;
+    rdfs:label "Prehistoria" ;
+    hist:finPeriodo -3000 ;
+    hist:inicioPeriodo -3500000 ;
+    rdfs:subClassOf hist:Periodo .
+
+hist:Renacimiento a hist:Movimiento ;
+    rdfs:label "Renacimiento" ;
+    hist:descripcion "Renacimiento cultural" ;
+    hist:finPeriodo 1600 ;
+    hist:inicioPeriodo 1300 .
+
+ent:Napoleón_Bonaparte a hist:Personaje ;
+    rdfs:label "Napoleón Bonaparte",
+        "Napoleón_Bonaparte" ;
+    hist:descripcion "Emperador francés" ;
+    hist:fechaFallecimiento "1821" ;
+    hist:fechaNacimiento "1769" .
+
+ent:Roma a hist:Ubicacion ;
+    rdfs:label "Roma" ;
+    hist:continente "Europa" ;
+    hist:tipoUbicacion "Capital imperial" .
+
+hist:Edad_Antigua a hist:Periodo,
+        owl:Class ;
+    rdfs:label "Edad Antigua" ;
+    hist:finPeriodo 476 ;
+    hist:inicioPeriodo -3000 ;
+    rdfs:subClassOf hist:Periodo .
+
+hist:Edad_Media a hist:Periodo,
+        owl:Class ;
+    rdfs:label "Edad Media" ;
+    hist:finPeriodo 1453 ;
+    hist:inicioPeriodo 476 ;
+    rdfs:subClassOf hist:Periodo .
+
+hist:Edad_Moderna a hist:Periodo,
+        owl:Class ;
+    rdfs:label "Edad Moderna" ;
+    hist:finPeriodo 1789 ;
+    hist:inicioPeriodo 1453 ;
+    rdfs:subClassOf hist:Periodo .
+
+ent:Europa a hist:Ubicacion ;
+    rdfs:label "Europa" .
+
+hist:Edad_Contemporanea a hist:Periodo,
+        owl:Class ;
+    rdfs:label "Edad Contemporanea" ;
+    hist:inicioPeriodo 1789 ;
+    rdfs:subClassOf hist:Periodo .
+
+hist:Concepto a owl:Class .
+
+hist:Movimiento a owl:Class .
+
+hist:Periodo a owl:Class .
+
+hist:EventoHistorico a owl:Class .
+
+hist:Ubicacion a owl:Class .
+
+hist:Personaje a owl:Class .
+

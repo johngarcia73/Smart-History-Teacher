@@ -13,7 +13,10 @@ from sentence_transformers import SentenceTransformer
 from utils.constants import INDEX_FILE, METADATA_FILE, DOCUMENTS_FOLDER, EVAL_JID
 from utils.helpers import safe_json_dumps
 from indexer import build_index
+from fastembed import TextEmbedding
+from ontology.ontology import OntologyManager
 
+ontology_man = OntologyManager()
 class SearchAgent(Agent):
     async def setup(self):
         print("DistributedSearchAgent: Verificando base de conocimientos...")
@@ -23,7 +26,7 @@ class SearchAgent(Agent):
         if not (os.path.exists(INDEX_FILE) and os.path.exists(METADATA_FILE)):
             print(f"Construyendo base desde {DOCUMENTS_FOLDER}...")
             build_index(DOCUMENTS_FOLDER, INDEX_FILE, METADATA_FILE)
-
+            
         self.index = faiss.read_index(INDEX_FILE)
         with open(METADATA_FILE, "rb") as f:
             self.metadata = pickle.load(f)
@@ -31,6 +34,8 @@ class SearchAgent(Agent):
         self.tokenized_chunks = [word_tokenize(chunk.lower()) for chunk in self.chunks]
         self.bm25 = BM25Okapi(self.tokenized_chunks)
         self.embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        #self.embedder =  TextEmbedding("sentence-transformers/all-MiniLM-L6-v2", cache_dir="model_cache")
+        
         self.add_behaviour(self.SearchBehaviour())
         print(f"{self.jid} iniciado correctamente")
 
@@ -41,6 +46,8 @@ class SearchAgent(Agent):
                 payload = json.loads(msg.body)
                 query = payload.get("query", "")
                 print(f"DistributedSearchAgent: Consulta recibida: {query}")
+                
+                query = ontology_man.expand_query(query)
                 
                 query_embedding = self.agent.embedder.encode([query])[0]
                 query_embedding = np.array([query_embedding])

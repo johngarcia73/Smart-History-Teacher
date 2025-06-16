@@ -1,6 +1,6 @@
 import asyncio
 from utils.constants import (
-    SEARCH_JID, EVAL_JID, PROMPT_JID, INITIATOR_JID, PASSWORDS, SERVER, SCRAPER_JID, CRAWLER_JID,MOODLE_JID,PROFILE_JID
+    SEARCH_JID, EVAL_JID, PROMPT_JID, INITIATOR_JID, PASSWORDS, SERVER, SCRAPER_JID, CRAWLER_JID,MOODLE_JID,PROFILE_JID,LOG_DIR
 )
 from agents.query_initiator import QueryInitiatorAgent
 from agents.searcher import SearchAgent
@@ -10,8 +10,20 @@ from agents.prompt_manager import PromptAgent
 from agents.crawler import CrawlerAgent
 from Interface.MoodleAgent import MoodleAgent
 from src.agents.ProfileManager import ProfileManagerAgent
+import os
+import logging
+from logging.handlers import RotatingFileHandler
+from utils.logging import configure_logging
+from ontology.ontology import OntologyManager
+
+
+print("Ontología histórica construida exitosamente!")
 
 async def main():
+    
+    current_log = configure_logging()
+    logger = logging.getLogger(__name__)
+        
     search_agent = SearchAgent(SEARCH_JID, PASSWORDS[SEARCH_JID])
     eval_agent = EvaluationAgent(EVAL_JID, PASSWORDS[EVAL_JID])
     prompt_agent = PromptAgent(PROMPT_JID, PASSWORDS[PROMPT_JID])
