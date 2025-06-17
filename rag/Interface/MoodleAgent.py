@@ -31,10 +31,11 @@ class MoodleAgent(Agent):
 class MoodleAPI:
     """Clase encapsulada para interacciones con la API de Moodle"""
     def __init__(self):
-        self.MOODLE_URL = os.getenv("url").rstrip('/')
-        self.MOODLE_TOKEN = os.getenv("Moodle_token")
-        self.USER_ID = os.getenv("Moodle_ITS_ID")
-        self.ENDPOINT = f"{os.getenv("url")}/webservice/rest/server.php"
+        
+        self.MOODLE_URL = "http://localhost"
+        self.MOODLE_TOKEN = "56772b1ba299575696f3d809f25adbf9"
+        self.USER_ID = 2
+        self.ENDPOINT = f"http://localhost/webservice/rest/server.php"
         self.ROLE_STUDENT = 5
         self.last_messages={}
 

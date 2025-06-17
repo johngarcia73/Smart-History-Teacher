@@ -5,7 +5,7 @@ from spade.behaviour import OneShotBehaviour
 from spade.message import Message
 from utils.constants import SEARCH_JID, EVAL_JID, PROMPT_JID, PASSWORDS
 from utils.testingquestions import testingqueries
-from agents.evaluator import max_list
+#from agents.evaluator import max_list
 import numpy as np
 import logging
 class QueryInitiatorAgent(Agent):
@@ -14,8 +14,13 @@ class QueryInitiatorAgent(Agent):
             queries = [
                 #"¿De cuántos estados está compuesta la república?",
                 #"Logros militares de Napoleón Bonaparte"
-                #"El guerrero más destacado de la batalla de Notre Dame"
-                "Cómo fue la Revolución Francesa?"
+                #"El loco más loco de la ciudad maldita de Notre Dame"
+                #"Chocolate Rastamemba, el Fari, la bella y la bestia"
+                #"Cómo fue la Revolución Francesa?"
+                #"Galileo, a principios del siglo XVII, utilizara un telescopio"
+                #"Isaac Newton, el último mago de Chile, hizo su aparición en el circo de Inglaterra"
+                #"Revolución Darwiniana"
+                "WMOHs s jwswiba DJWQI(3829 ) #NI@"
             ]
             
             logger = logging.getLogger(__name__)
