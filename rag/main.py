@@ -29,20 +29,21 @@ async def main():
     prompt_agent = PromptAgent(PROMPT_JID, PASSWORDS[PROMPT_JID])
     #scraper_agent = ScraperAgent(SCRAPER_JID, PASSWORDS[SCRAPER_JID])
     crawler_agent = CrawlerAgent(CRAWLER_JID, PASSWORDS[CRAWLER_JID])
-    #initiator = QueryInitiatorAgent(INITIATOR_JID, PASSWORDS[INITIATOR_JID])
-    Moodle_Agent= MoodleAgent(MOODLE_JID,PASSWORDS[MOODLE_JID])
-    profile_Agent=profilemanageragent(PROFILE_JID,PASSWORDS[PROFILE_JID])
+    initiator = QueryInitiatorAgent(INITIATOR_JID, PASSWORDS[INITIATOR_JID])
+    #Moodle_Agent= MoodleAgent(MOODLE_JID,PASSWORDS[MOODLE_JID])
+    #profile_Agent=profilemanageragent(PROFILE_JID,PASSWORDS[PROFILE_JID])
+    
     
     await prompt_agent.start(auto_register=True)
     await search_agent.start(auto_register=True)
     await eval_agent.start(auto_register=True)
     await crawler_agent.start(auto_register=True)
-    await profile_Agent.start(auto_register=True)
+    #await profile_Agent.start(auto_register=True)
     #await scraper_agent.start(auto_register=True)
     await asyncio.sleep(2)
     
-    await Moodle_Agent.start(auto_register=True)
-    #await initiator.start(auto_register=True)
+    #await Moodle_Agent.start(auto_register=True)
+    await initiator.start(auto_register=True)
     
     print("Sistema distribuido iniciado. Presiona Ctrl+C para detener.")
     try:
@@ -50,13 +51,13 @@ async def main():
             await asyncio.sleep(1)
     except KeyboardInterrupt:
         print("Deteniendo agentes...")
-        #await initiator.stop()
-        await Moodle_Agent.stop()
+        await initiator.stop()
+        #await Moodle_Agent.stop()
         await search_agent.stop()
         await eval_agent.stop()
         await prompt_agent.stop()
         await crawler_agent.stop()
-        await profile_Agent.stop()
+        #await profile_Agent.stop()
         #await scraper_agent.stop()
 
 if __name__ == "__main__":

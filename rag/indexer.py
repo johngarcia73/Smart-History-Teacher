@@ -321,7 +321,7 @@ def chunk_text(text, chunk_size=1000): # Mas eficiente
     #text = " ".join(text.split())
     #chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
     #return chunks
-    return chunk_sliding_window(text)
+    return chunk_sentence_based(text)
 
 def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_metadata.pickle'):
     # 1. Revisar si el índice ya existe
@@ -400,6 +400,7 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         nlist = 100  # Número de clusters
         quantizer = faiss.IndexFlatIP(dimension)
         index = faiss.IndexIVFFlat(quantizer, dimension, nlist, faiss.METRIC_INNER_PRODUCT)
+        #index.make_direct_map()
         
         if not index.is_trained:
             logger.info("Entrenando el índice IVFFlat con los embeddings seleccionados...")
