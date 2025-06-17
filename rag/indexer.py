@@ -16,7 +16,6 @@ from bs4 import BeautifulSoup
 import re
 from utils.logging import configure_logging
 from utils.chunking import chunk_fixed_char, chunk_fixed_tokens, chunk_paragraph_based, chunk_recursive, chunk_sentence_based, chunk_sliding_window
-from fastembed import TextEmbedding
 
 
 # Configurar logging

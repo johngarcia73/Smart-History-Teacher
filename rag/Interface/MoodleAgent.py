@@ -70,26 +70,42 @@ class MoodleAPI:
         except Exception as e:
             print(f"Error obteniendo mensajes: {e}")
             return None
-    def get_messages(self):
+    def get_messages(self,):
         """Obtiene los mensajes nuevos del usario"""
         conversations= self.get_conversations()
         all_messages = {}
         for conv in conversations.get("conversations", []):
-            if not conv["id"] in self.last_messages:
-                self.last_messages[conv["id"]]=0
+        # Obtener el ID del otro participante (no el usuario actual)
+            other_user_id = next(
+                (member['id'] for member in conv['members'] 
+                 if member['id'] != self.USER_ID),
+                None
+            )
+        
+            if not other_user_id:
+                continue
+
             messages = self._make_request(
-                'core_message_get_conversation_messages',
+                'core_message_get_messages',
                 {
-                 'currentuserid': self.USER_ID, 
-                 'convid': conv['id'],
-                 'limitfrom':self.USER_ID,
-                 'limitnum': 1,
-                 'timefrom': self.last_messages[conv["id"]]
+                    'useridto': self.USER_ID,
+                    'useridfrom': other_user_id,  # Usar USER ID real
+                    'read': 0,
+                    'limitfrom': self.USER_ID,           
                 }
             )
             if messages and 'messages' in messages:
-                all_messages[conv['id']]=messages['messages']
+                    all_messages[conv['id']]=messages['messages']
         return all_messages
+    
+    def Mark_messages_read(self,message_id):
+        return self._make_request(
+            'core_message_mark_message_read',
+            {
+                'messageid': message_id
+            }
+        )
+
     def send_messages(self, message, conversation_id,timecreated):
         """Envía múltiples mensajes a una conversación"""
         params = {'conversationid': conversation_id}
@@ -137,16 +153,15 @@ class MoodleMonitorBehaviour(PeriodicBehaviour):
         messages = self.agent.moodle_api.get_messages()
         for id in messages:
             #msg= self.send_User_Data_to_Profile(messages[id])
-            msg= Message(to="profilemanageragent@localhost",body= f"{id}",metadata={"phase":"profile"})
-            await self.send(msg)
+            if not messages[id]: continue
             for message in messages[id]:
                 
                 self.agent.moodle_api.Block_User(message['useridfrom'])
                 if message['text']:
                     msg = Message(
-                        to="search_agent@localhost",
-                        body=json.dumps({"query":message['text']}),
-                        metadata={"phase":"query"}
+                        to="personality_analizer@localhost",
+                        body=json.dumps({"query":message['text'],"user_id": message['useridfrom']}),
+                        metadata={"phase":"analyzer"}
                     )
                     await self.send(msg)
                     print(f"[Monitor] Enviados {len(message)} mensajes al agente procesador")
@@ -159,5 +174,6 @@ class MoodleMonitorBehaviour(PeriodicBehaviour):
                         final_answer = body.get("final_answer", "")
                         self.agent.moodle_api.send_messages(final_answer,id,message['timecreated'])
                         self.agent.moodle_api.Unblock_User(message['useridfrom'])
+                        self.agent.moodle_api.Mark_messages_read(message['id'])
     #def send_User_Data_to_Profile(id):
         

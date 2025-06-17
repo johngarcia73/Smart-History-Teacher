@@ -12,7 +12,7 @@ class InteractionBasedUpdater:
         self.cluster_centroids = {}
         self.cluster_last_updated = None
         
-    def update_profile_based_on_interaction(self, user_id, interaction_data):
+    def update_profile(self, user_id, interaction_data):
         """
         Actualiza el perfil del usuario basado en datos de interacción
         
@@ -63,7 +63,7 @@ class InteractionBasedUpdater:
 
     def _update_communication_prefs(self, profile, interaction):
         """Ajusta preferencias de comunicación basado en reacción"""
-        prefs = profile['preferences']
+        prefs = profile['preferences']['communication']
         reaction = interaction.get('reaction', 'neutral')
         style_used = interaction.get('response_style', 'neutral')
         
@@ -85,8 +85,8 @@ class InteractionBasedUpdater:
     
     def _update_topic_prefs(self, profile, interaction):
         """Actualiza preferencias de temas basado en interacción"""
-        prefs = profile['preferences']
-        topics = interaction.get('topics', [])
+        prefs = profile['preferences']['topics']
+        topics = interaction.get('preferred_topics', [])
         reaction = interaction.get('reaction', 'neutral')
         
         if not topics:
@@ -98,17 +98,17 @@ class InteractionBasedUpdater:
         
         # Actualizar temas interactuados
         for topic in topics:
-            if topic not in prefs['topic_affinity']:
-                prefs['topic_affinity'][topic] = 0.5
-            prefs['topic_affinity'][topic] = np.clip(
-                prefs['topic_affinity'][topic] + topic_change, 0.0, 1.0
+            if topic not in prefs['affinity']:
+                prefs['affinity'][topic] = 0.5
+            prefs['affinity'][topic] = np.clip(
+                prefs['affinity'][topic] + topic_change, 0.0, 1.0
             )
         
         # Aplicar decaimiento a todos los temas
-        for topic in prefs['topic_affinity']:
+        for topic in prefs['affinity']:
             if topic not in topics:
-                prefs['topic_affinity'][topic] = (
-                    (prefs['topic_affinity'][topic] - 0.5) * decay_factor + 0.5
+                prefs['affinity'][topic] = (
+                    (prefs['affinity'][topic] - 0.5) * decay_factor + 0.5
                 )
     
     def _update_engagement_metrics(self, profile, interaction):

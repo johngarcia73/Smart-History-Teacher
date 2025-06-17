@@ -3,6 +3,7 @@ from spade.message import Message
 from spade.behaviour import CyclicBehaviour
 from spade.template import Template
 from ..UserProfileManager import UserProfileManager
+from ..UpdateProfile import InteractionBasedUpdater
 import numpy as np
 import json
 class profilemanageragent(Agent):
@@ -10,19 +11,25 @@ class profilemanageragent(Agent):
     def __init__(self, jid, password):
         super().__init__(jid, password)
         self.ProfileManager= UserProfileManager()
+        self.UpdateManager= InteractionBasedUpdater(self.ProfileManager)
+
     async def setup(self):
         template = Template(metadata={"phase": "profile"})
         handleProfile= HandleProfileBehaviour()
         self.add_behaviour(handleProfile,template)
-
+        handleUpdateProfile= HandleUpdateProfileBehaviour()
+        template = Template(metadata={"phase": "interaction"})
+        self.add_behaviour(handleUpdateProfile,template)
 
         pass
-class HandleProfileBehaviour(CyclicBehaviour):
+class HandleUpdateProfileBehaviour(CyclicBehaviour):
     async def run(self) :
         
-        msg = await self.receive(50)
-        if msg:
-            User_Profile= self.agent.ProfileManager.get_profile(msg.body)
+        msg = await self.receive(timeout=10)
+        
+        if msg and msg.get_metadata("phase") == "interaction":
+            data= json.loads(msg.body)
+            User_Profile= self.agent.UpdateManager.update_profile(data["user_id"],data["interaction_data"])
             params=  await self.get_llm_parameters(User_Profile)
             send_msg= Message(
                 to="prompt_agent@localhost",
@@ -107,4 +114,21 @@ class HandleProfileBehaviour(CyclicBehaviour):
         #    params['user_cluster'] = cluster_id
         #    params['cluster_description'] = self._generate_cluster_descriptions()[cluster_id]
         return params
+
+class HandleProfileBehaviour(CyclicBehaviour):
+    async def run(self):
         
+        msg= await self.receive(timeout=20)
+        if msg and msg.metadata["phase"] == 'profile':
+            data= json.loads(msg.body)
+            profile= self.agent.ProfileManager.get_profile(data["user_id"])
+            msg= Message(
+                to="personality_analizer@localhost",
+                body= json.dumps({
+                    "profile":profile,
+                    "user_id":data["user_id"],
+                    "raw_query": data["raw_query"]}),
+                metadata={"phase": "profile"}
+            ) 
+            await self.send(msg)           
+               

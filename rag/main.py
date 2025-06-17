@@ -1,6 +1,6 @@
 import asyncio
 from utils.constants import (
-    SEARCH_JID, EVAL_JID, PROMPT_JID, INITIATOR_JID, PASSWORDS, SERVER, SCRAPER_JID, CRAWLER_JID,MOODLE_JID,PROFILE_JID,LOG_DIR
+    SEARCH_JID, EVAL_JID, PROMPT_JID, INITIATOR_JID, PASSWORDS, SERVER, PERSONALITY_JID, CRAWLER_JID,MOODLE_JID,PROFILE_JID,LOG_DIR
 )
 from agents.query_initiator import QueryInitiatorAgent
 from agents.searcher import SearchAgent
@@ -15,6 +15,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from utils.logging import configure_logging
 from ontology.ontology import OntologyManager
+from src.agents.Personality_Analizer import PersonalityAnalyzerAgent
 
 
 print("Ontología histórica construida exitosamente!")
@@ -32,7 +33,9 @@ async def main():
     #initiator = QueryInitiatorAgent(INITIATOR_JID, PASSWORDS[INITIATOR_JID])
     Moodle_Agent= MoodleAgent(MOODLE_JID,PASSWORDS[MOODLE_JID])
     profile_Agent=profilemanageragent(PROFILE_JID,PASSWORDS[PROFILE_JID])
-    
+    Personality_Analyzer_agent= PersonalityAnalyzerAgent(PERSONALITY_JID,PASSWORDS[PERSONALITY_JID])
+
+    await Personality_Analyzer_agent.start(auto_register=True)
     await prompt_agent.start(auto_register=True)
     await search_agent.start(auto_register=True)
     await eval_agent.start(auto_register=True)
@@ -52,6 +55,7 @@ async def main():
         print("Deteniendo agentes...")
         #await initiator.stop()
         await Moodle_Agent.stop()
+        await Personality_Analyzer_agent.stop()
         await search_agent.stop()
         await eval_agent.stop()
         await prompt_agent.stop()

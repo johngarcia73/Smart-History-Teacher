@@ -13,7 +13,6 @@ from sentence_transformers import SentenceTransformer
 from utils.constants import INDEX_FILE, METADATA_FILE, DOCUMENTS_FOLDER, EVAL_JID
 from utils.helpers import safe_json_dumps
 from indexer import build_index
-from fastembed import TextEmbedding
 from ontology.ontology import OntologyManager
 
 ontology_man = OntologyManager()

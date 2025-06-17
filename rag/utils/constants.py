@@ -6,6 +6,7 @@ SCRAPER_JID = "scrapper_agent@localhost"
 CRAWLER_JID = "crawler_agent@localhost"   
 MOODLE_JID = "moodle_agent@localhost"
 PROFILE_JID="profilemanageragent@localhost"
+PERSONALITY_JID="personality_analizer@localhost"
 
 INDEX_FILE = "faiss_index.bin"
 METADATA_FILE = "chunk_metadata.pickle"
@@ -19,7 +20,8 @@ PASSWORDS = {
     SCRAPER_JID: "notelasabes",
     CRAWLER_JID: "notelasabes",
     MOODLE_JID: "notelasabes",
-    PROFILE_JID:"notelasabes"
+    PROFILE_JID:"notelasabes",
+    PERSONALITY_JID:"notelasabes"
 }
 
 INDEX_FILE = "faiss_index.bin"
