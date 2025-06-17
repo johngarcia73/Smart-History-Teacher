@@ -20,6 +20,7 @@ class QueryInitiatorAgent(Agent):
                 #"Galileo, a principios del siglo XVII, utilizara un telescopio"
                 #"Isaac Newton, el último mago de Chile, hizo su aparición en el circo de Inglaterra"
                 #"Revolución Darwiniana"
+                "WMOHs s jwswiba DJWQI(3829 ) #NI@"
             ]
             
             logger = logging.getLogger(__name__)

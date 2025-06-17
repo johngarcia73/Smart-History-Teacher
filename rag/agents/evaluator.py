@@ -108,10 +108,10 @@ class EvaluationAgent(Agent):
                     # Usar rango intercuartílico para manejar outliers
                     q1, q3 = np.percentile(faiss_raw_scores, [25, 75])
                     iqr = q3 - q1
-                    median = np.median(faiss_raw_scores)
+                    mean = np.mean(faiss_raw_scores)
                     
                     # Escalado robusto
-                    faiss_norm = [(s - median) / iqr if iqr > 1e-6 else s for s in faiss_raw_scores]
+                    faiss_norm = [(s - mean) / iqr if iqr > 1e-6 else s for s in faiss_raw_scores]
                     # Normalizar a rango [0,1]
                     min_val = min(faiss_norm)
                     max_val = max(faiss_norm)
@@ -150,17 +150,20 @@ class EvaluationAgent(Agent):
                 else:
                     bm25_norm = []
                     
-                    
+                print(f"Las normas faiss son: {faiss_norm} y las bm25 son: {bm25_norm}")
 
                 ranked_candidates = []
                 for i, candidate in enumerate(candidates):
-                    weights = self.agent.get_adaptive_weights(query_type, candidate)
+                    weights = self.agent.get_adaptive_weights(query_type, candidate, query_tokens)
                     
                     faiss_val = faiss_norm[i] if faiss_norm and i < len(faiss_norm) else 0
                     bm25_val = bm25_norm[i] if bm25_norm and i < len(bm25_norm) else 0
                     
+                    print(f"El valor faiss es: {faiss_val} y el de bm25 es: {bm25_val}")
+                    
+                    print(candidate)
                     final_score = (
-                        weights["faiss"] * faiss_val +
+                        weights["faiss"]  * faiss_val +
                         weights["bm25"] * bm25_val
                     )
                     ranked_candidates.append({
@@ -300,26 +303,47 @@ class EvaluationAgent(Agent):
                 import traceback
                 traceback.print_exc()
 
-    def get_adaptive_weights(self, query_type, candidate):
-        # MEJORA 3: Pesos más conservadores
+    def get_adaptive_weights(self, query_type, candidate, query_tokens):
+        # Pesos base para cada tipo de consulta.
         base_weights = {
             "factual": {"faiss": 0.6, "bm25": 0.4},
             "conceptual": {"faiss": 0.7, "bm25": 0.3},
-            "procedural": {"faiss": 0.5, "bm25": 0.5}
+            "procedural": {"faiss": 0.5, "bm25": 0.5},
+            "default": {"faiss": 0.5, "bm25": 0.5}
         }
+
+        # Seleccionar los pesos según el tipo de consulta 
+        weights = base_weights.get(query_type, {"faiss": 0.3, "bm25": 0.7}).copy()
+
+        # Calcular la coincidencia sintáctica: 
+        # Convertir el texto candidato en tokens (en minúsculas, asumiendo que ya tienes tokenización en otra parte)
+        candidate_tokens = candidate["text"].lower().split()
+        if not query_tokens:
+            overlap_ratio = 0
+        else:
+            # Contar cuántos tokens del query aparecen en el candidato
+            matching = sum(1 for token in query_tokens if token in candidate_tokens)
+            overlap_ratio = matching / len(query_tokens)
+
+        # Ajustar la influencia de BM25 si la coincidencia sintáctica es baja.
+        # Por ejemplo, si overlap_ratio < 0.3, se aplica un factor de penalización.
         
-        weights = base_weights.get(query_type, {"faiss": 0.6, "bm25": 0.4}).copy()
-        
-        # Ajustes más sutiles basados en longitud
-        text_length = len(candidate["text"])
-        if text_length > 300:
-            weights["faiss"] = min(weights["faiss"] + 0.05, 0.75)
-        elif text_length < 100:
-            weights["bm25"] = min(weights["bm25"] + 0.05, 0.75)
-        
-        # Normalización
-        total = sum(weights.values())
-        return {k: v / total for k, v in weights.items()}
+        """
+        if overlap_ratio < 0.3:
+            penalty_factor = 2  # Reducir la influencia de BM25 a la mitad
+            weights["bm25"] *= penalty_factor
+        """
+        # Opcionalmente puedes fijar límites o realizar ajustes más dinâmicos,
+        # agregando, por ejemplo, una penalización progresiva según la diferencia al umbral deseado.
+
+        # Normalización final de los pesos para que sumen 1
+        total = weights["faiss"] + weights["bm25"]
+        normalized_weights = {
+            "faiss": weights["faiss"] / total,
+            "bm25": weights["bm25"] / total
+        }
+        return normalized_weights
+
 
 
 class QueryAnalyzer:
@@ -355,7 +379,7 @@ class QueryAnalyzer:
 
 
 class ScoreNormalizer:
-    def sigmoid_scale(self, scores, a=4, b=None):
+    def sigmoid_scale(self, scores, a=10, b=None):
         if scores is None or len(scores) == 0:
             return []
             

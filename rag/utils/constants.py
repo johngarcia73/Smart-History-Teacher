@@ -31,7 +31,7 @@ HF_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
 SCORE_THRESHOLD = 7
 WIKIPEDIA_API = "https://es.wikipedia.org/w/api.php"
 
-CONFIDENCE_THRESHOLD = 0.7  # Ajustar según evaluación
+CONFIDENCE_THRESHOLD = 0.75  # Ajustar según evaluación
 
 LOG_DIR = "logs"
 

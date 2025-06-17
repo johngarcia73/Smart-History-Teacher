@@ -400,7 +400,7 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         nlist = 100  # Número de clusters
         quantizer = faiss.IndexFlatIP(dimension)
         index = faiss.IndexIVFFlat(quantizer, dimension, nlist, faiss.METRIC_INNER_PRODUCT)
-        #index.make_direct_map()
+        index.make_direct_map()
         
         if not index.is_trained:
             logger.info("Entrenando el índice IVFFlat con los embeddings seleccionados...")
