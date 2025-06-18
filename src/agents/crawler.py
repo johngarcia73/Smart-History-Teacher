@@ -8,21 +8,14 @@ from spade.behaviour import CyclicBehaviour
 import re
 from urllib.parse import urlparse, parse_qs, quote, unquote
 
-# Configuración del logger
 logger = logging.getLogger(__name__)
-#############################################
-# Búsqueda y Scraping Ultra-Simplificado (CORREGIDO)
-#############################################
 
 def simple_search(query, limit=100):
-    """Búsqueda directa con extracción precisa"""
     logger.info(f"Buscando: '{query}'")
     try:
-        # URL de búsqueda
         query_encoded = quote(query)
         url = f"https://duckduckgo.com/html/?q={query_encoded}"
         
-        # Headers para parecer navegador real
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -33,17 +26,13 @@ def simple_search(query, limit=100):
         response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
         
-        # Parsear HTML con BeautifulSoup
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Encontrar todos los enlaces de resultados
         urls = []
         for link in soup.find_all('a', href=True):
             href = link['href']
             
-            # Manejar URLs de DuckDuckGo
             if href.startswith('/l/?uddg=') or 'uddg=' in href:
-                # Extraer parámetro uddg
                 parsed = urlparse(href)
                 query_params = parse_qs(parsed.query)
                 if 'uddg' in query_params:
@@ -59,7 +48,6 @@ def simple_search(query, limit=100):
                         real_url = href[start:end]
                     urls.append(unquote(real_url))
             
-            # Agregar URLs directas
             elif href.startswith('http') and 'duckduckgo' not in href:
                 urls.append(href)
                 
@@ -78,7 +66,6 @@ def simple_scrape(url, max_chunks=3):
     try:
         logger.info(f"Scrapeando: {url}")
         
-        # Obtener HTML
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
         }
@@ -87,11 +74,9 @@ def simple_scrape(url, max_chunks=3):
         
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Eliminar elementos no deseados
         for element in soup(['script', 'style', 'header', 'footer', 'nav', 'aside']):
             element.decompose()
         
-        # Obtener todo el texto
         text = soup.get_text(separator=' ', strip=True)
         
         # Limpiar y dividir en chunks de 500 caracteres
@@ -134,9 +119,6 @@ async def simple_scrape_web(query, max_chunks=5):
     logger.info(f"Total chunks obtenidos: {len(all_chunks)}")
     return all_chunks[:max_chunks]
 
-#############################################
-# Agente CrawlerAgent
-#############################################
 
 class CrawlerAgent(Agent):
     class CrawlBehaviour(CyclicBehaviour):

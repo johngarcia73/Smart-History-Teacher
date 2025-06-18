@@ -9,13 +9,12 @@ class ScoreNormalizer:
         min_val = min(scores)
         max_val = max(scores)
         
-        if max_val - min_val < 1e-6:  # Evitar división por cero
+        if max_val - min_val < 1e-6: 
             return [0.5] * len(scores)
             
         return [(s - min_val) / (max_val - min_val) for s in scores]
     
     def robust_scale(self, scores):
-        """Escalado robusto usando IQR"""
         if len(scores) < 4:
             return self.minmax_scale(scores)
             
@@ -37,5 +36,4 @@ class ScoreNormalizer:
         scores = np.array(scores)
         if b is None:
             b = np.mean(scores)
-        # Evitamos overflow al limitar los argumentos de la exponencial
         return 1 / (1 + np.exp(-a * (scores - b)))

@@ -21,7 +21,7 @@ from utils.chunking import chunk_fixed_char, chunk_fixed_tokens, chunk_paragraph
 # Configurar logging
 logger = logging.getLogger(__name__)
 
-# Configuración: carpeta donde se guardarán los libros descargados
+# carpeta donde se guardarán los libros descargados
 BOOKS_FOLDER = "data"
 os.makedirs(BOOKS_FOLDER, exist_ok=True)
 MIN_BOOKS = 1
@@ -32,7 +32,6 @@ HISTORY_KEYWORDS = [
     "edad media", "renacimiento", "reconquista", "descubrimiento", "conquista"
 ]
 
-# Fuentes académicas especializadas en historia
 ACADEMIC_SOURCES = {
     "REDIAL": "https://redial-redae.eu/search?query=historia&format=book&lang=es",
     "HISTORIA_NACIONAL": "https://historianacional.cl/biblioteca?categoria=historia&formato=digital",
@@ -105,7 +104,6 @@ def search_history_books(source, count):
         return []
 
 def download_history_book(source, identifier, title):
-    """Descarga libros de historia con verificación de contenido"""
     file_path = os.path.join(BOOKS_FOLDER, f"{source}_{identifier}.txt")
     
     if os.path.exists(file_path):
@@ -130,12 +128,10 @@ def download_history_book(source, identifier, title):
             soup = BeautifulSoup(response.text, 'html.parser')
             text = soup.select_one('.document-text').get_text()
         
-        # Verificar que es un libro de historia
         if not any(kw in text.lower() for kw in HISTORY_KEYWORDS[:5]):
             logger.warning(f"El contenido no parece histórico: {title}")
             return None
             
-        # Limpiar y guardar
         text = re.sub(r'\s+', ' ', text).strip()
         if len(text) < 10000:
             logger.warning(f"Contenido demasiado corto: {title}")
@@ -155,7 +151,6 @@ def download_history_collection(min_books):
     downloaded = []
     remaining = min_books
     
-    # Orden de prioridad de fuentes históricas
     sources_order = ["HISTORIA_NACIONAL", "BIBLIOTECA_HISTORICA", "REDIAL"]
     
     for source in sources_order:
@@ -165,7 +160,6 @@ def download_history_collection(min_books):
         books = search_history_books(source, remaining * 2)  # Buscar más para filtrar
         logger.info(f"Libros potenciales encontrados: {len(books)}")
         
-        # Filtrar y descargar los más relevantes
         for book in books:
             if remaining <= 0:
                 break
@@ -198,7 +192,6 @@ def download_history_from_archive(max_books=10):
     """Descarga específicamente libros de historia de Internet Archive"""
     logger.info(f"Descargando {max_books} libros de historia desde Internet Archive")
     
-    # Búsqueda especializada con filtros estrictos
     params = {
         'q': 'subject:"History" AND title:historia AND language:(spa) AND mediatype:texts',
         'fl[]': ['identifier', 'title'],
@@ -234,7 +227,6 @@ def download_history_from_archive(max_books=10):
     
     
 def download_ia_book(book_info):
-    """Descarga un libro específico de Internet Archive con verificación histórica"""
     identifier = book_info['id']
     title = book_info['title']
     file_path = os.path.join(BOOKS_FOLDER, f"IA_{identifier}.txt")
@@ -261,7 +253,6 @@ def download_ia_book(book_info):
         file_name = largest_file['name']
         download_url = f"https://archive.org/download/{identifier}/{file_name}"
         
-        # Descargar contenido
         response = requests.get(download_url, stream=True, timeout=60)
         response.raise_for_status()
         
@@ -269,9 +260,8 @@ def download_ia_book(book_info):
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
         
-        # Leer y verificar contenido histórico
         with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
-            text = f.read(20000)  # Leer solo los primeros 20KB para verificación
+            text = f.read(20000)
             
         if not any(kw in text.lower() for kw in HISTORY_KEYWORDS[:5]):
             logger.warning(f"El contenido no parece histórico: {title}")
@@ -287,7 +277,6 @@ def download_ia_book(book_info):
     
 
 def load_documents_from_folder(folder_path):
-    """Carga todos los archivos .txt de la carpeta y devuelve una lista de documentos."""
     documents = []
     for file_path in glob.glob(os.path.join(folder_path, "*.txt")):
         try:
@@ -301,41 +290,25 @@ def load_documents_from_folder(folder_path):
             logger.error(f"Error leyendo {file_path}: {str(e)}")
     return documents
 
-"""
-def chunk_text(text, max_sentences=2):
-    try:
-        sentences = sent_tokenize(text, language='spanish')
-        chunks = []
-        for i in range(0, len(sentences), max_sentences):
-            chunk = " ".join(sentences[i:i + max_sentences])
-            chunks.append(chunk)
-        return chunks
-    except Exception as e:
-        logger.error(f"Error en chunk_text: {str(e)}")
-        return []
-"""
+
 def chunk_text(text, chunk_size=1000): # Mas eficiente
     #text = text.replace("\n", " ")
-    # Eliminar espacios innecesarios
     #text = " ".join(text.split())
     #chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
     #return chunks
     return chunk_sentence_based(text)
 
 def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_metadata.pickle'):
-    # 1. Revisar si el índice ya existe
     if os.path.exists(index_file) and os.path.exists(metadata_file):
         logger.info("El índice y los metadatos ya existen. Saliendo de build_index.")
         return
 
-    # 2. Verificar libros existentes en la carpeta
     existing_books = [fname for fname in os.listdir(folder_path) if fname.endswith('.txt')]
     if len(existing_books) < MIN_BOOKS:
         faltan = MIN_BOOKS - len(existing_books)
         logger.info(f"Se requieren al menos {MIN_BOOKS} libros. Actualmente hay {len(existing_books)}. Descargando {faltan} libros más...")
         download_history_collection(faltan)
     
-    # 3. Cargar documentos
     logger.info(f"Cargando documentos desde: {folder_path}")
     documents = load_documents_from_folder(folder_path)
     
@@ -343,11 +316,9 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         logger.error("No se encontraron documentos para indexar después de la descarga.")
         return
     
-    # 4. Crear chunks y metadatos
     chunks = []
     chunk_metadata = []
     for doc_id, doc in enumerate(documents):
-        # Usamos el método rápido para dividir el documento en chunks
         doc_chunks = chunk_text(doc, chunk_size=1000)
         if not doc_chunks:
             continue
@@ -363,14 +334,12 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         logger.error("No se generaron chunks válidos para indexar.")
         return
     
-    # 5. Generar embeddings y normalizarlos (con batch_size para acelerar)
     logger.info("Generando embeddings...")
     try:
         embedder = SentenceTransformer('all-MiniLM-L6-v2')
         print("1")
         chunk_embeddings = embedder.encode(chunks, convert_to_numpy=True, batch_size=256)
         print("2")
-        # Normalizar los embeddings para similitud coseno
         faiss.normalize_L2(chunk_embeddings)
         print("3")
     except Exception as e:
@@ -378,7 +347,6 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         return
 
 
-    # 6. Preparación del submuestreo para entrenamiento del índice.
     doc_indices = defaultdict(list)
     for idx, meta in enumerate(chunk_metadata):
         doc_indices[meta['document_id']].append(idx)
@@ -413,7 +381,6 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         logger.error(f"Error construyendo índice FAISS: {str(e)}")
         return
     
-    # 8. Guardar el índice y los metadatos en disco
     logger.info("Guardando el índice y los metadatos...")
     try:
         faiss.write_index(index, index_file)

@@ -119,7 +119,7 @@ class EvaluationAgent(Agent):
                     faiss_norm = [(s - min_val) / range_val for s in faiss_norm]
                     
                     
-                # MEJORA 2: Sistema de bonificación más estricto
+                #Sistema de bonificación
                 candidate_bm25_scores = []
                 if candidates:
                     bm25_full_scores = self.agent.bm25.get_scores(query_tokens)
@@ -135,11 +135,8 @@ class EvaluationAgent(Agent):
                         
                         for phrase in query_phrases:
                             if phrase in candidate_text:
-                                # Verificar que la frase no esté en contexto negativo
                                 if not self.is_out_of_context(phrase, candidate_text, query):
-                                    # Bonus proporcional a la importancia de la frase
                                     importance = min(len(phrase.split()) / 5, 1.0)
-                                    phrase_bonus += importance * 0.2  # Bonus máximo de 0.2 por frase
                         
                         # Límite estricto al bonus total
                         phrase_bonus = min(phrase_bonus, 0.4)
@@ -196,7 +193,6 @@ class EvaluationAgent(Agent):
             
         def is_out_of_context(self, phrase, candidate_text, query):
             """Verifica si la frase aparece en contexto irrelevante"""
-            # Ejemplo: si la frase es "Galileo" pero aparece en lista de científicos
             negative_patterns = [
                 "lista de", "entre ellos", "como por ejemplo", "tales como",
                 "entre otros", "etc.", "y otros"
@@ -212,7 +208,6 @@ class EvaluationAgent(Agent):
             context_end = min(len(candidate_text), start_pos + len(phrase) + 50)
             context = candidate_text[context_start:context_end]
             
-            # Verificar si hay patrones negativos cerca
             return any(pattern in context for pattern in negative_patterns)
 
         def extract_key_phrases(self, query):
@@ -220,12 +215,10 @@ class EvaluationAgent(Agent):
             doc = self.agent.query_analyzer.nlp(query.lower())
             phrases = []
             
-            # Solo frases sustantivas con contenido semántico
             for chunk in doc.noun_chunks:
-                if len(chunk.text.split()) > 1:  # Ignorar palabras sueltas
+                if len(chunk.text.split()) > 1:
                     phrases.append(chunk.text)
             
-            # Filtrar frases demasiado comunes
             common_phrases = ["el siglo", "la obra", "del mundo"]
             phrases = [p for p in phrases if p not in common_phrases]
             
@@ -254,7 +247,7 @@ class EvaluationAgent(Agent):
                 
                 logger.info(f"ScraperResponse: Recibidos {len(scraped_chunks)} chunks para '{query}'")
                 
-                # Calcular BM25 para los nuevos chunks de Wikipedia
+                # Calcular BM25 para los nuevos chunks
                 wiki_scores = []
                 if scraped_chunks:
                     tokenized_wiki = [word_tokenize(chunk.lower(), language='spanish') for chunk in scraped_chunks]
@@ -264,13 +257,11 @@ class EvaluationAgent(Agent):
                 else:
                     wiki_norm = []
 
-                combined_candidates = candidates[:]  # Todos los candidatos locales
+                combined_candidates = candidates[:]
                 
-                # Añadir chunks de Wikipedia con puntaje calculado
                 for i, chunk in enumerate(scraped_chunks):
                     wiki_score = wiki_norm[i] if i < len(wiki_norm) else 0
                     
-                    # Factor de confianza para fuentes externas (70% del máximo local)
                     trust_factor = 0.7
                     max_local = max(c["final_score"] for c in candidates) if candidates else 1.0
                     adjusted_score = wiki_score * max_local * trust_factor
@@ -281,12 +272,11 @@ class EvaluationAgent(Agent):
                         "final_score": adjusted_score
                     })
                 
-                # Re-ranquear combinados
+                # Re-rankear
                 combined_candidates.sort(key=lambda x: x["final_score"], reverse=True)
                 sorted_candidates = combined_candidates[:5]
                 context = " ".join(c["text"] for c in sorted_candidates)
                 
-                # Enviar a PromptAgent
                 prompt_msg = Message(to=PROMPT_JID)
                 prompt_msg.set_metadata("phase", "prompt")
                 prompt_msg.set_metadata("original_sender", original_sender)
@@ -304,7 +294,6 @@ class EvaluationAgent(Agent):
                 traceback.print_exc()
 
     def get_adaptive_weights(self, query_type, candidate, query_tokens):
-        # Pesos base para cada tipo de consulta.
         base_weights = {
             "factual": {"faiss": 0.6, "bm25": 0.4},
             "conceptual": {"faiss": 0.7, "bm25": 0.3},
@@ -312,31 +301,16 @@ class EvaluationAgent(Agent):
             "default": {"faiss": 0.5, "bm25": 0.5}
         }
 
-        # Seleccionar los pesos según el tipo de consulta 
         weights = base_weights.get(query_type, {"faiss": 0.3, "bm25": 0.7}).copy()
 
-        # Calcular la coincidencia sintáctica: 
-        # Convertir el texto candidato en tokens (en minúsculas, asumiendo que ya tienes tokenización en otra parte)
         candidate_tokens = candidate["text"].lower().split()
         if not query_tokens:
             overlap_ratio = 0
         else:
-            # Contar cuántos tokens del query aparecen en el candidato
             matching = sum(1 for token in query_tokens if token in candidate_tokens)
             overlap_ratio = matching / len(query_tokens)
 
-        # Ajustar la influencia de BM25 si la coincidencia sintáctica es baja.
-        # Por ejemplo, si overlap_ratio < 0.3, se aplica un factor de penalización.
         
-        """
-        if overlap_ratio < 0.3:
-            penalty_factor = 2  # Reducir la influencia de BM25 a la mitad
-            weights["bm25"] *= penalty_factor
-        """
-        # Opcionalmente puedes fijar límites o realizar ajustes más dinâmicos,
-        # agregando, por ejemplo, una penalización progresiva según la diferencia al umbral deseado.
-
-        # Normalización final de los pesos para que sumen 1
         total = weights["faiss"] + weights["bm25"]
         normalized_weights = {
             "faiss": weights["faiss"] / total,
@@ -357,14 +331,13 @@ class QueryAnalyzer:
         doc = self.nlp(query)
         question = query.lower()
         
-        # Detección mejorada de tipo de pregunta
+        # Detección de tipo de pregunta
         question_types = {
             "factual": ["quién", "cuándo", "dónde", "cuántos", "cuántas", "en qué año"],
             "procedural": ["cómo", "pasos", "proceso", "método"],
             "conceptual": ["por qué", "causas", "consecuencias", "impacto", "efectos", "explica", "diferencia"]
         }
         
-        # Búsqueda por palabras clave mejorada
         for q_type, markers in question_types.items():
             if any(marker in question for marker in markers):
                 return q_type
@@ -391,8 +364,7 @@ class ScoreNormalizer:
         return list(1 / (1 + np.exp(-a * (scores - b))))
     
     def robust_scale(self, scores):
-        """Escalado robusto usando IQR con normalización a [0,1]"""
-        # CORRECCIÓN: Verificación segura para arrays
+        """Escalado usando IQR con normalización a [0,1]"""
         if scores is None or len(scores) == 0:
             return []
             
@@ -419,7 +391,6 @@ class ScoreNormalizer:
         return list((scaled - min_val) / range_val)
     
     def minmax_scale(self, scores):
-        # CORRECCIÓN: Verificación segura para arrays
         if scores is None or len(scores) == 0:
             return []
             
