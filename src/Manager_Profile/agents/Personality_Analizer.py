@@ -66,9 +66,9 @@ class PersonalityAnalyzerAgent(Agent):
              
         async def _build_analysis_prompt(self, raw_query, profile):
             """Construye el prompt para el análisis de personalidad y expansión de query"""
-            hist_prefs=json.dumps(profile.get('preferences',{}).get('history_specific',{}))
-            topics=json.dumps(profile.get('preferences',{}).get('topics'))
-            comunicacion= json.dumps(profile.get('preferences', {}).get('communication', {}))
+            hist_prefs=profile.get('preferences',{}).get('history_specific',{})
+            topics=profile.get('preferences',{}).get('topics')
+            comunicacion= profile.get('preferences', {}).get('communication', {})
             return f"""
                 Eres un experto en analizar el estilo de comunicación y preferencias de los usuarios, 
                 y en mejorar consultas para búsqueda de información. Tu tarea es:
@@ -76,9 +76,9 @@ class PersonalityAnalyzerAgent(Agent):
             1. ANALIZAR ESTILO DE COMUNICACIÓN:
                - Usando el mensaje del usuario, deduce sus preferencias de comunicación
                - Considera el perfil existente como contexto:
-                "Comunicacion":{comunicacion}
-                 "historico": {hist_prefs}
-                 "temas": {topics}
+                "Comunicacion":{json.dumps(comunicacion)}
+                 "historico": {json.dumps(hist_prefs)}
+                 "temas": {json.dumps(topics)}
                - Parámetros a deducir:
                  * humor_score: 0.0-1.0 (0=serio, 1=divertido)
                  * formality_level: 0.0-1.0 (0=informal, 1=formal)
@@ -91,9 +91,9 @@ class PersonalityAnalyzerAgent(Agent):
 
             2. EXPANDIR Y RECTIFICAR LA QUERY:
                - Mejora la consulta para búsqueda en base de conocimiento historico
-               - Considera el enfoque historiográfico del usuario: {hist_prefs.get('historiographical_approach', 'N/A')}
+               - Considera el enfoque historiográfico del usuario: {hist_prefs.get('historiographical_approach',"")}
                - Incorpora preferencias de evidencia: {', '.join(hist_prefs.get('evidence_preference', []))}
-               - Maneja controversias según: {hist_prefs.get('controversy_handling', 'neutral')}
+               - Maneja controversias según: {hist_prefs.get('controversy_handling',"")}
                - Enfatiza temas preferidos: {', '.join(topics.get('preferred', []))}
                - Evita temas no deseados: {', '.join(topics.get('disliked', []))}
                - Añade contexto histórico relevante manteniendo la intención original

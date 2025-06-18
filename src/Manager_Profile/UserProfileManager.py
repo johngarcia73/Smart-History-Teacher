@@ -24,7 +24,7 @@ class UserProfileManager:
                     "humor": 0.5,
                     "formality": 0.5,
                     "style_weights": {"neutral":0.5},
-                    "style_history":{{'style':'neutral','timestamp':datetime.now().isoformat(),'confidence':0.4}},
+                    "style_history":[{'style':'neutral','timestamp':datetime.now().isoformat(),'confidence':0.4}],
                     "tone": "neutral"
                 },
                 # Parámetros específicos de historia

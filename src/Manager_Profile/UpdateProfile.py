@@ -75,19 +75,19 @@ class InteractionBasedUpdater:
             prefs['formality'] = (prefs['formality'] * (1 - ADAPTATION_FACTOR)) + (interaction['formality_level'] * ADAPTATION_FACTOR)
         
 
-        update_style= {style: weight*DECAY_FACTOR for style, weight in prefs['styles_weights'].items()}
+        update_style= {style: weight*DECAY_FACTOR for style, weight in prefs['style_weights'].items()}
         if style_used in update_style:
             update_style[style_used] +=confidence + (1-ADAPTATION_FACTOR)
         else:
             update_style[style_used] = confidence + (1-ADAPTATION_FACTOR)
         total = sum(update_style.values())           
-        prefs['styles_weights']= {style: weight / total for style, weight in update_style.items()}
-        prefs['styles_history'].append({
+        prefs['style_weights']= {style: weight / total for style, weight in update_style.items()}
+        prefs['style_history'].append({
             'style':style_used,
             'timestamp':datetime.now().isoformat(),
             'confidence':confidence
         })
-        prefs['styles_history']=prefs['styles_history'][-50:]
+        prefs['style_history']=prefs['style_history'][-50:]
                
     def _update_topic_prefs(self, profile, interaction):
         """Actualiza preferencias de temas basado en interacción"""
