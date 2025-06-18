@@ -82,7 +82,6 @@ class PromptAgent(Agent):
 
                 Respuesta personalizada:"""
             
-            # Rellenar el template con valores reales
             prompt = prompt_template.format(
                 style=params['style'],
                 humor_level=params['humor_level'],
@@ -122,19 +121,16 @@ def call_endpoint(body):
         "Content-Type": "application/json"
     }
     response = requests.post("https://apigateway.avangenio.net/chat/completions", headers=headers, json=body)
-    response.raise_for_status()  # Lanza una excepción si hay algún error
+    response.raise_for_status()
     return response.json()
 
 def parse_response(response_data):
-    # Se busca el campo "message" en la raíz.
     if "message" in response_data and isinstance(response_data["message"], dict) and "content" in response_data["message"]:
         return response_data["message"]["content"]
-    # Sino, se revisa dentro de "choices"
     if ("choices" in response_data and isinstance(response_data["choices"], list) and len(response_data["choices"]) > 0):
         first_choice = response_data["choices"][0]
         if ("message" in first_choice and isinstance(first_choice["message"], dict) and "content" in first_choice["message"]):
             return first_choice["message"]["content"]
-    # Si no se encuentra la estructura deseada, retornar el JSON completo como cadena
     return json.dumps(response_data)
 
 def send_request(prompt):

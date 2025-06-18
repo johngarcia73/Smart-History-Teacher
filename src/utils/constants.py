@@ -30,11 +30,10 @@ DOCUMENTS_FOLDER = "./data"
 
 HF_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
 #HF_MODEL = "free"
-SCORE_THRESHOLD = 7
 WIKIPEDIA_API = "https://es.wikipedia.org/w/api.php"
 
-CONFIDENCE_THRESHOLD = 0.75  # Ajustar según evaluación
+CONFIDENCE_THRESHOLD = 0.75
 
 LOG_DIR = "logs"
 
-CACHE_SIZE = 100  # Tamaño máximo de caché
+CACHE_SIZE = 100

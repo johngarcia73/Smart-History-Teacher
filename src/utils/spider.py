@@ -16,7 +16,6 @@ class DuckDuckGoSearchSpider(scrapy.Spider):
          "DOWNLOAD_TIMEOUT": 10,
          "LOG_ENABLED": False
     }
-    # Atributo de clase para almacenar los resultados
     results = []
 
     def __init__(self, query, limit=5, *args, **kwargs):
@@ -30,7 +29,6 @@ class DuckDuckGoSearchSpider(scrapy.Spider):
          logger.debug(f"[DuckDuckGoSearchSpider] Iniciado para query: {query}")
 
     def parse(self, response):
-         # Intentamos extraer enlaces usando selectores para la versión HTML de DuckDuckGo
          links = response.css("a.result__a::attr(href)").getall()
          if not links:
              links = response.css("div.result a::attr(href)").getall()
@@ -42,6 +40,6 @@ class DuckDuckGoSearchSpider(scrapy.Spider):
                  break
          
          logger.debug(f"[DuckDuckGoSearchSpider] URLs encontradas: {self.result_urls}")
-         # Almacenamos en el atributo de clase para poder recuperarlo luego
+         # Guardarr el atributo de clase para poder recuperarlo luego
          DuckDuckGoSearchSpider.results = self.result_urls
          yield {"results": self.result_urls}

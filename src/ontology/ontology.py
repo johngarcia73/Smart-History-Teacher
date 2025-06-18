@@ -19,7 +19,6 @@ class OntologyManager:
         self.kg.bind("hist", self.HIST)
         self.kg.bind("ent", self.ENT)
         
-        # Verificar si la ontología ya existe
         if os.path.exists(self.ontology_file):
             self.load_ontology()
             logger.info("Ontología cargada desde archivo")
@@ -32,7 +31,6 @@ class OntologyManager:
     
     def create_base_ontology(self):
         """Crea la estructura básica de la ontología (sin datos)"""
-        # Definir clases básicas
         clases = [
             self.HIST.EventoHistorico,
             self.HIST.Personaje,
@@ -45,7 +43,6 @@ class OntologyManager:
         for clase in clases:
             self.kg.add((clase, RDF.type, OWL.Class))
         
-        # Definir propiedades
         propiedades = [
             (self.HIST.tieneParticipante, self.HIST.EventoHistorico, self.HIST.Personaje),
             (self.HIST.tieneLugar, self.HIST.EventoHistorico, self.HIST.Ubicacion),
@@ -58,12 +55,10 @@ class OntologyManager:
             self.kg.add((prop, RDFS.domain, dominio))
             self.kg.add((prop, RDFS.range, rango))
         
-        # Propiedad adicional para Personaje
         self.kg.add((self.HIST.influencio, RDF.type, OWL.ObjectProperty))
         self.kg.add((self.HIST.influencio, RDFS.domain, self.HIST.Personaje))
         self.kg.add((self.HIST.influencio, RDFS.range, self.HIST.Personaje))
         
-        # Definir periodos históricos
         periodos = [
             ("Prehistoria", -3500000, -3000),
             ("Edad_Antigua", -3000, 476),
@@ -92,7 +87,6 @@ class OntologyManager:
         """Añade un evento histórico a la ontología"""
         evento_uri = URIRef(f"{self.ENT}{nombre.replace(' ', '_')}")
         
-        # Verificar si ya existe
         if (evento_uri, None, None) in self.kg:
             logger.warning(f"Evento '{nombre}' ya existe en la ontología")
             return evento_uri
@@ -125,7 +119,6 @@ class OntologyManager:
         uri1 = URIRef(f"{self.ENT}{evento1.replace(' ', '_')}")
         uri2 = URIRef(f"{self.ENT}{evento2.replace(' ', '_')}")
         
-        # Verificar si ambos eventos existen
         if not ((uri1, None, None) in self.kg and (uri2, None, None) in self.kg):
             logger.error("Uno o ambos eventos no existen en la ontología")
             return False
@@ -160,19 +153,14 @@ class OntologyManager:
 
     def expand_query(self, query, max_terms=3):
         """
-        Expande la consulta reemplazando el término del evento histórico encontrado
-        por el mismo término seguido de una indicación entre paréntesis con información
-        derivada de las relaciones definidas (por ejemplo, influenciadoPor, causaDirecta, 
-        parteDe y resultadoEn).
-
         Ejemplo:
         Entrada: "Cómo fue la Revolución Francesa en Europa?"
-        Salida: "Cómo fue la Revolución Francesa (si cabe, tener en cuenta la influencia en Revolución Americana) en Europa?"
+        Salida: "Cómo fue la Revolución Francesa (si entra en el tema, tener en cuenta la influencia en Revolución Americana) en Europa?"
         """
         if not query:
             return query
 
-        expanded_query = query  # Copia de la query original
+        expanded_query = query
         rel_types = [
             self.HIST.influenciadoPor,
             self.HIST.causaDirecta,
@@ -180,49 +168,42 @@ class OntologyManager:
             self.HIST.resultadoEn
         ]
 
-        # Recorremos todos los eventos históricos de la ontología
         for event in self.kg.subjects(RDF.type, self.HIST.EventoHistorico):
             label = self.kg.value(event, RDFS.label)
             if not label:
                 continue
 
             label_str = str(label)
-            # Si el término del evento aparece (sin distinguir mayúsculas/minúsculas) en la query...
+            # Si el término del evento aparece
             if re.search(re.escape(label_str), query, flags=re.IGNORECASE):
                 expansion_phrases = []
                 term_count = 0
 
-                # Para cada tipo de relación definido, buscamos hasta max_terms relaciones
                 for rel in rel_types:
                     if term_count >= max_terms:
                         break
 
-                    # Por cada relación del evento:
                     for _, _, related in self.kg.triples((event, rel, None)):
                         related_label = self.kg.value(related, RDFS.label)
                         if not related_label:
                             continue
-                        # Generar el texto específico según el tipo de relación
                         if rel == self.HIST.influenciadoPor:
-                            phrase = f"si cabe, tener en cuenta la influencia en {related_label}"
+                            phrase = f"si entra en el tema, tener en cuenta la influencia en {related_label}"
                         elif rel == self.HIST.causaDirecta:
-                            phrase = f"si cabe, tener en cuenta la causa directa sobre {related_label}"
+                            phrase = f"si entra en el tema, tener en cuenta la causa directa sobre {related_label}"
                         elif rel == self.HIST.parteDe:
-                            phrase = f"si cabe, tener en cuenta su relación con {related_label}"
+                            phrase = f"si entra en el tema, tener en cuenta su relación con {related_label}"
                         elif rel == self.HIST.resultadoEn:
-                            phrase = f"si cabe, tener en cuenta que tuvo resultado en {related_label}"
+                            phrase = f"si entra en el tema, tener en cuenta que tuvo resultado en {related_label}"
                         else:
                             phrase = ""
                         
                         if phrase and phrase not in expansion_phrases:
                             expansion_phrases.append(phrase)
                             term_count += 1
-                            # Pasamos a la siguiente relación; si se desea capturar más de una por tipo, quitar 'break'
                             break
                 if expansion_phrases:
-                    # Formar la cadena de expansión
                     expansion_text = " (" + ", ".join(expansion_phrases) + ")"
-                    # Reemplazar el primer match de label en la query con label + expansion_text
                     expanded_query = re.sub(re.escape(label_str), f"{label_str}{expansion_text}", expanded_query, flags=re.IGNORECASE)
                     
         print(f"La consulta mejorada es: {expanded_query}")
@@ -241,8 +222,7 @@ class OntologyManager:
         return related_events
 
     def poblar_ontologia(self):
-        """Método para poblar la ontología con datos iniciales (ejemplo)"""
-        # Aquí puedes agregar datos iniciales a la ontología
+        """poblar la ontología con datos iniciales (ejemplo)"""
         self.add_historical_event("Caida del Imperio Romano", fecha_inicio="476", participantes=["Odoacro"], lugares=["Roma"])
         self.add_historical_event("Descubrimiento de América", fecha_inicio="1492", participantes=["Cristóbal Colón"], lugares=["San Salvador"])
 
@@ -250,10 +230,7 @@ class OntologyManager:
 
     # Poblar ontología
     def poblar_ontologia(self):
-        """Pobla la ontología con datos históricos completos de forma manual"""
-        # ======================
-        # PERIODOS HISTÓRICOS
-        # ======================
+        """Puebla la ontología con datos históricos iniciales"""
         periodos = [
             ("Prehistoria", -3500000, -3000),
             ("Edad_Antigua", -3000, 476),
@@ -270,9 +247,6 @@ class OntologyManager:
             if fin:
                 self.kg.add((periodo_uri, self.HIST.finPeriodo, Literal(fin)))
         
-        # ======================
-        # MOVIMIENTOS HISTÓRICOS
-        # ======================
         movimientos = [
             ("Revolución_Neolítica", -10000, -3000, "Transición a agricultura"),
             ("Civilización_Egipcia", -3100, -332, "Antiguo Egipto"),
@@ -291,9 +265,6 @@ class OntologyManager:
             self.kg.add((movimiento_uri, self.HIST.inicioPeriodo, Literal(inicio)))
             self.kg.add((movimiento_uri, self.HIST.finPeriodo, Literal(fin)))
         
-        # ======================
-        # EVENTOS HISTÓRICOS CLAVE
-        # ======================
         eventos = [
             # Prehistoria y Edad Antigua
             ("Revolución_Neolítica", "-10000", [], ["Creciente_Fértil"]),
@@ -329,9 +300,6 @@ class OntologyManager:
                 lugares=lugares
             )
         
-        # ======================
-        # PERSONAJES HISTÓRICOS
-        # ======================
         personajes = [
             ("Alejandro_Magno", "-356", "-323", "Rey macedonio"),
             ("Julio_César", "-100", "-44", "Dictador romano"),
@@ -352,9 +320,6 @@ class OntologyManager:
             self.kg.add((personaje_uri, self.HIST.fechaNacimiento, Literal(nac)))
             self.kg.add((personaje_uri, self.HIST.fechaFallecimiento, Literal(muerte)))
         
-        # ======================
-        # UBICACIONES HISTÓRICAS
-        # ======================
         ubicaciones = [
             ("Mesopotamia", "Región histórica", "Asia"),
             ("Valle_del_Indo", "Civilización antigua", "Asia"),
@@ -371,9 +336,6 @@ class OntologyManager:
             self.kg.add((ubicacion_uri, self.HIST.tipoUbicacion, Literal(tipo)))
             self.kg.add((ubicacion_uri, self.HIST.continente, Literal(continente)))
         
-        # ======================
-        # CONCEPTOS HISTÓRICOS
-        # ======================
         conceptos = [
             ("Democracia", "Sistema de gobierno del pueblo"),
             ("Monarquía", "Gobierno por reyes"),
@@ -388,9 +350,6 @@ class OntologyManager:
             self.kg.add((concepto_uri, RDFS.label, Literal(nombre.replace('_', ' '))))
             self.kg.add((concepto_uri, self.HIST.descripcion, Literal(desc)))
         
-        # ======================
-        # RELACIONES CLAVE
-        # ======================
         relaciones = [
             # Relaciones entre eventos
             ("Revolución Francesa", "Revolución Americana", "influenciadoPor"),
@@ -437,7 +396,6 @@ class OntologyManager:
         
         # ======================
         # ASIGNAR PERIODOS
-        # ======================
         asignaciones_periodos = {
             "Prehistoria": ["Revolución Neolítica"],
             "Edad_Antigua": ["Construcción Pirámides Giza", "Fundación de Roma", "Guerras Púnicas"],
@@ -453,21 +411,6 @@ class OntologyManager:
                 self.kg.add((evento_uri, self.HIST.ocurreEn, periodo_uri))
         
         
-
-def descargar_datos_wikidata():
-    query = """
-    SELECT ?person ?personLabel ?birth ?death ?occupationLabel
-    WHERE {
-        ?person wdt:P31 wd:Q5;
-                wdt:P106 ?occupation;
-                wdt:P569 ?birth.
-        OPTIONAL { ?person wdt:P570 ?death }
-        SERVICE wikibase:label { bd:serviceParam wikibase:language "es". }
-    }
-    LIMIT 1000
-    """
-    url = f"https://query.wikidata.org/sparql?query={query}&format=json"
-    return requests.get(url).json()
 
 
 if __name__ == "__main__":
