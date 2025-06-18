@@ -33,7 +33,7 @@ class MoodleAPI:
     def __init__(self):
         
         self.MOODLE_URL = "http://localhost"
-        self.MOODLE_TOKEN = "56772b1ba299575696f3d809f25adbf9"
+        self.MOODLE_TOKEN = os.getenv("Moodle_token")
         self.USER_ID = 2
         self.ENDPOINT = f"http://localhost/webservice/rest/server.php"
         self.ROLE_STUDENT = 5

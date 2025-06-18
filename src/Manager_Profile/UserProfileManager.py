@@ -5,7 +5,7 @@ from datetime import datetime
 
 class UserProfileManager:
     def __init__(self):
-        self.base_dir = "./src/user_profiles"
+        self.base_dir = "./src/Manager_Profile/user_profiles"
         os.makedirs(self.base_dir, exist_ok=True)
     
     def _get_profile_path(self, user_id):

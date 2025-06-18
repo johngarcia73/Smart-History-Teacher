@@ -9,13 +9,13 @@ from agents.prompt_manager import PromptAgent
 #from agents.scrapper import ScraperAgent 
 from agents.crawler import CrawlerAgent
 from Interface.MoodleAgent import MoodleAgent
-from src.agents.ProfileManager import profilemanageragent
+from Manager_Profile.agents.ProfileManager import profilemanageragent
 import os
 import logging
 from logging.handlers import RotatingFileHandler
 from utils.logging import configure_logging
 from ontology.ontology import OntologyManager
-from src.agents.Personality_Analizer import PersonalityAnalyzerAgent
+from Manager_Profile.agents.Personality_Analizer import PersonalityAnalyzerAgent
 
 
 print("Ontología histórica construida exitosamente!")
@@ -40,12 +40,12 @@ async def main():
     await search_agent.start(auto_register=True)
     await eval_agent.start(auto_register=True)
     await crawler_agent.start(auto_register=True)
-    #await profile_Agent.start(auto_register=True)
+    await profile_Agent.start(auto_register=True)
     #await scraper_agent.start(auto_register=True)
     await asyncio.sleep(2)
     
-    #await Moodle_Agent.start(auto_register=True)
-    await initiator.start(auto_register=True)
+    await Moodle_Agent.start(auto_register=True)
+    #await initiator.start(auto_register=True)
     
     print("Sistema distribuido iniciado. Presiona Ctrl+C para detener.")
     try:
@@ -60,7 +60,7 @@ async def main():
         await eval_agent.stop()
         await prompt_agent.stop()
         await crawler_agent.stop()
-        #await profile_Agent.stop()
+        await profile_Agent.stop()
         #await scraper_agent.stop()
 
 if __name__ == "__main__":
