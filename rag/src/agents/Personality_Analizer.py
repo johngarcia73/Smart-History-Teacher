@@ -66,26 +66,40 @@ class PersonalityAnalyzerAgent(Agent):
              
         async def _build_analysis_prompt(self, raw_query, profile):
             """Construye el prompt para el análisis de personalidad y expansión de query"""
+            hist_prefs=json.dumps(profile.get('preferences',{}).get('history_specific',{}))
+            topics=json.dumps(profile.get('preferences',{}).get('topics'))
+            comunicacion= json.dumps(profile.get('preferences', {}).get('communication', {}))
             return f"""
                 Eres un experto en analizar el estilo de comunicación y preferencias de los usuarios, 
                 y en mejorar consultas para búsqueda de información. Tu tarea es:
 
             1. ANALIZAR ESTILO DE COMUNICACIÓN:
                - Usando el mensaje del usuario, deduce sus preferencias de comunicación
-               - Considera el perfil existente como contexto: {json.dumps(profile['preferences'])}
+               - Considera el perfil existente como contexto:
+                "Comunicacion":{comunicacion}
+                 "historico": {hist_prefs}
+                 "temas": {topics}
                - Parámetros a deducir:
                  * humor_score: 0.0-1.0 (0=serio, 1=divertido)
                  * formality_level: 0.0-1.0 (0=informal, 1=formal)
                  * response_style: ['direct', 'narrative', 'technical', 'socratic']
-                 * preferred_topics: temas implícitos en el mensaje
+                 * style_confidence":  indica tu confianza en el análisis de estilo (0.0-1.0)
+                 * preferred_topics: temas implícitos en el mensaje (formato= dict(topic:topic_reaction(positive,negative)))(considera topicos implicitos en el mensaje)
+                 * historical_focus: enfoque histórico detectado que sea de agrado para el usuario (social, político, económico, cultural)
+                 * evidence_preference: tipos de evidencia sugeridos (primary, secondary, visual, textual)
                  * language: idioma detectado
 
             2. EXPANDIR Y RECTIFICAR LA QUERY:
-               - Mejora la consulta para búsqueda en base de conocimiento
+               - Mejora la consulta para búsqueda en base de conocimiento historico
+               - Considera el enfoque historiográfico del usuario: {hist_prefs.get('historiographical_approach', 'N/A')}
+               - Incorpora preferencias de evidencia: {', '.join(hist_prefs.get('evidence_preference', []))}
+               - Maneja controversias según: {hist_prefs.get('controversy_handling', 'neutral')}
+               - Enfatiza temas preferidos: {', '.join(topics.get('preferred', []))}
+               - Evita temas no deseados: {', '.join(topics.get('disliked', []))}
+               - Añade contexto histórico relevante manteniendo la intención original
                - Expande abreviaturas, aclara términos ambiguos
-               - Añade contexto histórico relevante
-               - Mantén la intención original
-
+               - Mantén la intención original y  no agregue informacion si esta no esta presente en el mensaje original de manera implicita
+               
             FORMATO DE RESPUESTA (SOLO JSON):
             {{
               "interaction_data": {{

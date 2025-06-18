@@ -6,7 +6,7 @@
     "communication": {
       "humor": 1.0,
       "formality": 0.5,
-      "style": "gossip_jokes",
+      "style": {"gossip_jokes":0.5},
       "tone": "neutral"
     },
     "history_specific": {

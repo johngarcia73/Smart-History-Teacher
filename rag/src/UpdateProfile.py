@@ -40,13 +40,11 @@ class InteractionBasedUpdater:
     def _update_history_prefs(self, profile, interaction):
         """Actualiza preferencias específicas de historia"""
         prefs = profile['preferences']['history_specific']
-        reaction = interaction.get('reaction')
         
         # Ajuste de enfoque historiográfico
-        if 'preferred_approach' in interaction:
-            new_approach = interaction['preferred_approach']
-            if reaction == 'positive':
-                prefs['historiographical_approach'] = new_approach
+        if 'historical_focus' in interaction:
+            new_approach = interaction['historical_focus']
+            prefs['historiographical_approach'] = new_approach
                 
         # Ajuste de nivel de crítica
         if 'source_criticism_feedback' in interaction:
@@ -64,45 +62,54 @@ class InteractionBasedUpdater:
     def _update_communication_prefs(self, profile, interaction):
         """Ajusta preferencias de comunicación basado en reacción"""
         prefs = profile['preferences']['communication']
-        reaction = interaction.get('reaction', 'neutral')
         style_used = interaction.get('response_style', 'neutral')
-        
+        confidence= interaction.get('style_confidence',0.7)
+        ADAPTATION_FACTOR=0.3
+        DECAY_FACTOR=0.95
         # Ajustar humor basado en reacción a bromas
         if 'humor_score' in interaction:
-            humor_change = 0.1 if reaction == 'positive' else -0.1
-            prefs['humor'] = np.clip(prefs.get('humor', 0.5) + humor_change, 0.0, 1.0)
+            prefs['humor'] = (prefs['humor'] * (1 - ADAPTATION_FACTOR)) + (interaction['humor_score'] * ADAPTATION_FACTOR)
         
         # Ajustar formalidad basado en reacción
-        if style_used == 'formal' and reaction == 'positive':
-            prefs['formality'] = np.clip(prefs.get('formality', 0.5) + 0.05, 0.0, 1.0)
-        elif style_used == 'casual' and reaction == 'positive':
-            prefs['formality'] = np.clip(prefs.get('formality', 0.5) - 0.05, 0.0, 1.0)
+        if 'formality_level' in interaction:
+            prefs['formality'] = (prefs['formality'] * (1 - ADAPTATION_FACTOR)) + (interaction['formality_level'] * ADAPTATION_FACTOR)
         
-        # Reforzar estilo de comunicación preferido
-        if reaction == 'positive' and style_used != 'neutral':
-            if style_used not in prefs['preferred_styles']:
-                prefs['preferred_styles'].append(style_used)
-    
+
+        update_style= {style: weight*DECAY_FACTOR for style, weight in prefs['styles_weights'].items()}
+        if style_used in update_style:
+            update_style[style_used] +=confidence + (1-ADAPTATION_FACTOR)
+        else:
+            update_style[style_used] = confidence + (1-ADAPTATION_FACTOR)
+        total = sum(update_style.values())           
+        prefs['styles_weights']= {style: weight / total for style, weight in update_style.items()}
+        prefs['styles_history'].append({
+            'style':style_used,
+            'timestamp':datetime.now().isoformat(),
+            'confidence':confidence
+        })
+        prefs['styles_history']=prefs['styles_history'][-50:]
+               
     def _update_topic_prefs(self, profile, interaction):
         """Actualiza preferencias de temas basado en interacción"""
         prefs = profile['preferences']['topics']
         topics = interaction.get('preferred_topics', [])
-        reaction = interaction.get('reaction', 'neutral')
-        
         if not topics:
             return
         
         # Calcular cambio en preferencia de temas
-        topic_change = 0.1 if reaction == 'positive' else -0.15
         decay_factor = 0.98  # Factor de decaimiento para temas no interactuados
         
+
+
         # Actualizar temas interactuados
         for topic in topics:
+            topic_change = 0.1 if topics[topic] == 'positive' else -0.25
             if topic not in prefs['affinity']:
                 prefs['affinity'][topic] = 0.5
             prefs['affinity'][topic] = np.clip(
                 prefs['affinity'][topic] + topic_change, 0.0, 1.0
             )
+
         
         # Aplicar decaimiento a todos los temas
         for topic in prefs['affinity']:
