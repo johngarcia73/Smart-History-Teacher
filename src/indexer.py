@@ -21,262 +21,192 @@ from utils.chunking import chunk_fixed_char, chunk_fixed_tokens, chunk_paragraph
 # Configurar logging
 logger = logging.getLogger(__name__)
 
-# carpeta donde se guardarán los libros descargados
+# Configuración: carpeta donde se guardarán los libros descargados
 BOOKS_FOLDER = "data"
 os.makedirs(BOOKS_FOLDER, exist_ok=True)
-MIN_BOOKS = 1
+MIN_BOOKS = 11
 
-
-HISTORY_KEYWORDS = [
-    "historia", "revolución", "guerra", "independencia", "colonial", "imperio", 
-    "edad media", "renacimiento", "reconquista", "descubrimiento", "conquista"
-]
-
-ACADEMIC_SOURCES = {
-    "REDIAL": "https://redial-redae.eu/search?query=historia&format=book&lang=es",
-    "HISTORIA_NACIONAL": "https://historianacional.cl/biblioteca?categoria=historia&formato=digital",
-    "BIBLIOTECA_HISTORICA": "https://bibliotecahistorica.es/catalogo?tema=historia&idioma=es"
+# Palabras clave para verificar que es historia
+HISTORY_KEYWORDS = {
+    "historia", "revolución", "guerra", "independencia", 
+    "colonial", "imperio", "renacimiento", "conquista"
 }
 
 
-
-
-def search_history_books(source, count):
-    """Búsqueda especializada en libros de historia en español"""
-    logger.info(f"Buscando {count} libros de historia en {source}")
+def search_gutenberg_books(count):
+    """
+    Busca libros en español con temática histórica usando la API Gutendex.
+    Devuelve una lista de dicts: {id, title}.
+    """
     books = []
-    
-    try:
-        if source == "REDIAL":
-            url = ACADEMIC_SOURCES[source]
-            headers = {"User-Agent": "Mozilla/5.0"}
-            response = requests.get(url, headers=headers, timeout=30)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            for item in soup.select('.result-item')[:count]:
-                title = item.select_one('h3.title').get_text().strip()
-                if not any(kw in title.lower() for kw in HISTORY_KEYWORDS):
-                    continue
-                book_id = item.select_one('a')['href'].split('/')[-1]
-                books.append({
-                    "source": source,
-                    "id": book_id,
-                    "title": title
-                })
-                
-        elif source == "HISTORIA_NACIONAL":
-            url = ACADEMIC_SOURCES[source]
-            response = requests.get(url, timeout=30)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            for item in soup.select('.book-card')[:count]:
-                title = item.select_one('h4').get_text().strip()
-                if not any(kw in title.lower() for kw in HISTORY_KEYWORDS):
-                    continue
-                book_id = item.select_one('a')['href'].split('/')[-1]
-                books.append({
-                    "source": source,
-                    "id": book_id,
-                    "title": title
-                })
-                
-        elif source == "BIBLIOTECA_HISTORICA":
-            url = ACADEMIC_SOURCES[source]
-            response = requests.get(url, timeout=30)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            for item in soup.select('.catalog-item')[:count]:
-                title = item.select_one('h3').get_text().strip()
-                if not any(kw in title.lower() for kw in HISTORY_KEYWORDS):
-                    continue
-                book_id = item.select_one('a')['href'].split('/')[-1]
-                books.append({
-                    "source": source,
-                    "id": book_id,
-                    "title": title
-                })
-                
-        logger.info(f"Encontrados {len(books)} libros de historia en {source}")
-        return books
-        
-    except Exception as e:
-        logger.error(f"Error buscando en {source}: {str(e)}")
-        return []
+    page = 1
+    while len(books) < 4:
+        resp = requests.get(
+            "https://gutendex.com/books",
+            params={
+                "languages": "es",
+                "topic": "history",
+                "page": page
+            },
+            timeout=15
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        for item in data.get("results", []):
+            title = item.get("title", "")
+            # Verificamos si el título contiene alguna clave de historia
+            books.append({
+                "source": "GUTENBERG",
+                "id": item["id"],
+                "title": title
+            })
+            if len(books) >= count:
+                break
+        if not data.get("next"):
+            break
+        print("7")
+        page += 1
+    return books[:count]
 
-def download_history_book(source, identifier, title):
-    file_path = os.path.join(BOOKS_FOLDER, f"{source}_{identifier}.txt")
-    
-    if os.path.exists(file_path):
-        return file_path
-    
-    try:
-        if source == "REDIAL":
-            url = f"https://redial-redae.eu/document/{identifier}/fulltext"
-            response = requests.get(url, timeout=30)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            text = soup.select_one('.document-content').get_text()
-            
-        elif source == "HISTORIA_NACIONAL":
-            url = f"https://historianacional.cl/documento/{identifier}"
-            response = requests.get(url, timeout=30)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            text = soup.select_one('.book-content').get_text()
-            
-        elif source == "BIBLIOTECA_HISTORICA":
-            url = f"https://bibliotecahistorica.es/documento/{identifier}"
-            response = requests.get(url, timeout=30)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            text = soup.select_one('.document-text').get_text()
-        
-        if not any(kw in text.lower() for kw in HISTORY_KEYWORDS[:5]):
-            logger.warning(f"El contenido no parece histórico: {title}")
-            return None
-            
-        text = re.sub(r'\s+', ' ', text).strip()
-        if len(text) < 10000:
-            logger.warning(f"Contenido demasiado corto: {title}")
-            return None
-            
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(text)
-            
-        return file_path
-        
-    except Exception as e:
-        logger.error(f"Error descargando {title}: {str(e)}")
+
+def download_gutenberg_book(book):
+    """
+    Descarga el texto del libro de Gutenberg. Intenta dos sufijos comunes.
+    Devuelve la ruta al archivo .txt o None.
+    """
+    identifier = book["id"]
+    filename = os.path.join(BOOKS_FOLDER, f"GUT_{identifier}.txt")
+
+    if os.path.exists(filename):
+        return filename
+    print("1")
+
+    for suffix in ("-0.txt", "-8.txt"):
+        print("2")
+        url = f"https://www.gutenberg.org/files/{identifier}/{identifier}{suffix}"
+        try:
+            r = requests.get(url, timeout=30)
+            if r.status_code == 200 and len(r.text) > 5000:
+                # Verificamos contenido histórico mínimo
+                print("3")
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(r.text)
+                    print("4")
+                return filename
+        except Exception:
+            continue
+    return None
+
+
+def search_archive_books(count):
+    """
+    Busca en Internet Archive libros con subject:History, idioma español.
+    Devuelve lista de dicts: {id, title}.
+    """
+    params = {
+        "q": 'subject:"History" AND language:(spa)',
+        "fl[]": ["identifier", "title"],
+        "sort[]": "downloads desc",
+        "rows": str(count),
+        "output": "json"
+    }
+    r = requests.get(
+        "https://archive.org/advancedsearch.php",
+        params=params,
+        timeout=15,
+        headers={"User-Agent": "Mozilla/5.0"}
+    )
+    r.raise_for_status()
+    docs = r.json()["response"]["docs"]
+    books = []
+    for d in docs:
+        title = d.get("title", d["identifier"])
+        if any(kw in title.lower() for kw in HISTORY_KEYWORDS):
+            books.append({
+                "source": "ARCHIVE",
+                "id": d["identifier"],
+                "title": title
+            })
+    return books[:count]
+
+
+def download_archive_book(book):
+    """
+    Descarga el mayor .txt disponible de Internet Archive para el identificador dado.
+    Devuelve la ruta al archivo o None.
+    """
+    identifier = book["id"]
+    filename = BOOKS_FOLDER / f"IA_{identifier}.txt"
+    if filename.exists():
+        return filename
+
+    # Obtén metadata y selecciona el .txt más grande
+    meta = requests.get(f"https://archive.org/metadata/{identifier}", timeout=15).json()
+    txts = [
+        f for f in meta.get("files", [])
+        if f.get("name", "").lower().endswith(".txt")
+           and int(f.get("size", 0)) > 10240
+    ]
+    if not txts:
         return None
+    largest = max(txts, key=lambda f: int(f.get("size", 0)))
+    url = f"https://archive.org/download/{identifier}/{largest['name']}"
 
-def download_history_collection(min_books):
-    """Descarga libros de historia de fuentes especializadas"""
+    # Descarga en streaming
+    with requests.get(url, stream=True, timeout=30) as r:
+        r.raise_for_status()
+        with open(filename, "wb") as f:
+            for chunk in r.iter_content(8_192):
+                f.write(chunk)
+
+    # Verificamos contenido histórico
+    snippet = filename.read_text(encoding="utf-8", errors="ignore")[:20_000].lower()
+    if not any(kw in snippet for kw in HISTORY_KEYWORDS):
+        filename.unlink(missing_ok=True)
+        return None
+    return filename
+
+
+def download_history_collection(min_books=MIN_BOOKS):
+    """
+    Descarga hasta min_books combinando Gutenberg y Archive.
+    """
     downloaded = []
     remaining = min_books
-    
-    sources_order = ["HISTORIA_NACIONAL", "BIBLIOTECA_HISTORICA", "REDIAL"]
-    
-    for source in sources_order:
+
+    print("0")
+    #Gutenberg
+    gut_books = search_gutenberg_books(remaining)
+    for b in gut_books:
         if remaining <= 0:
             break
-            
-        books = search_history_books(source, remaining * 2)  # Buscar más para filtrar
-        logger.info(f"Libros potenciales encontrados: {len(books)}")
-        
-        for book in books:
+        path = download_gutenberg_book(b)
+        if path:
+            downloaded.append(path)
+            remaining -= 1
+            print(f"[GUT] {b['title']} -> {path.name}")
+            time.sleep(0.2)
+
+    #Internet Archive
+    if remaining > 0:
+        ia_books = search_archive_books(remaining)
+        for b in ia_books:
             if remaining <= 0:
                 break
-                
-            # Priorizar libros con palabras clave en título
-            title_score = sum(1 for kw in HISTORY_KEYWORDS if kw in book["title"].lower())
-            if title_score < 2:
-                continue
-                
-            file_path = download_history_book(
-                source=book["source"],
-                identifier=book["id"],
-                title=book["title"]
-            )
-            
-            if file_path:
-                downloaded.append(file_path)
+            path = download_archive_book(b)
+            if path:
+                downloaded.append(path)
                 remaining -= 1
-                logger.info(f"Libro histórico descargado: {book['title']} ({source})")
-                time.sleep(0.5)
-    
-    # Si aún faltan libros, usar búsqueda especializada en Internet Archive
-    if remaining > 0:
-        logger.info(f"Descargando {remaining} libros de respaldo")
-        downloaded += download_history_from_archive(max_books=remaining)
-    
+                print(f"[IA] {b['title']} -> {path.name}")
+                time.sleep(0.2)
+
+    print(f"Total descargados: {len(downloaded)}")
     return downloaded
 
-def download_history_from_archive(max_books=10):
-    """Descarga específicamente libros de historia de Internet Archive"""
-    logger.info(f"Descargando {max_books} libros de historia desde Internet Archive")
-    
-    params = {
-        'q': 'subject:"History" AND title:historia AND language:(spa) AND mediatype:texts',
-        'fl[]': ['identifier', 'title'],
-        'sort[]': 'downloads desc',
-        'rows': str(max_books),
-        'output': 'json'
-    }
-    
-    try:
-        response = requests.get(
-            "https://archive.org/advancedsearch.php",
-            params=params,
-            timeout=30,
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
-        data = response.json()
-        books = []
-        
-        for doc in data.get('response', {}).get('docs', [])[:max_books]:
-            if any(kw in doc.get('title', '').lower() for kw in HISTORY_KEYWORDS):
-                books.append({
-                    'source': 'INTERNET_ARCHIVE',
-                    'id': doc['identifier'],
-                    'title': doc.get('title', doc['identifier'])
-                })
-        
-        logger.info(f"Libros históricos encontrados en IA: {len(books)}")
-        return [download_ia_book(book) for book in books if download_ia_book(book)]
-        
-    except Exception as e:
-        logger.error(f"Error en búsqueda especializada: {str(e)}")
-        return []
-    
-    
-def download_ia_book(book_info):
-    identifier = book_info['id']
-    title = book_info['title']
-    file_path = os.path.join(BOOKS_FOLDER, f"IA_{identifier}.txt")
-    
-    if os.path.exists(file_path):
-        return file_path
-    
-    try:
-        # Obtener metadatos del libro
-        meta_url = f"https://archive.org/metadata/{identifier}"
-        meta_response = requests.get(meta_url, timeout=30)
-        meta_data = meta_response.json()
-        
-        # Encontrar el archivo de texto más grande
-        txt_files = [f for f in meta_data.get('files', []) 
-                    if f.get('name', '').lower().endswith('.txt') 
-                    and int(f.get('size', '0')) > 10240]
-        
-        if not txt_files:
-            logger.warning(f"No se encontraron archivos .txt válidos en {identifier}")
-            return None
-        
-        largest_file = max(txt_files, key=lambda x: int(x['size']))
-        file_name = largest_file['name']
-        download_url = f"https://archive.org/download/{identifier}/{file_name}"
-        
-        response = requests.get(download_url, stream=True, timeout=60)
-        response.raise_for_status()
-        
-        with open(file_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-        
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
-            text = f.read(20000)
-            
-        if not any(kw in text.lower() for kw in HISTORY_KEYWORDS[:5]):
-            logger.warning(f"El contenido no parece histórico: {title}")
-            os.remove(file_path)
-            return None
-        
-        return file_path
-        
-    except Exception as e:
-        logger.error(f"Error descargando {title} de IA: {str(e)}")
-        return None
-    
-    
+
 
 def load_documents_from_folder(folder_path):
+    """Carga todos los archivos .txt de la carpeta y devuelve una lista de documentos."""
     documents = []
     for file_path in glob.glob(os.path.join(folder_path, "*.txt")):
         try:
@@ -290,25 +220,41 @@ def load_documents_from_folder(folder_path):
             logger.error(f"Error leyendo {file_path}: {str(e)}")
     return documents
 
-
+"""
+def chunk_text(text, max_sentences=2):
+    try:
+        sentences = sent_tokenize(text, language='spanish')
+        chunks = []
+        for i in range(0, len(sentences), max_sentences):
+            chunk = " ".join(sentences[i:i + max_sentences])
+            chunks.append(chunk)
+        return chunks
+    except Exception as e:
+        logger.error(f"Error en chunk_text: {str(e)}")
+        return []
+"""
 def chunk_text(text, chunk_size=1000): # Mas eficiente
     #text = text.replace("\n", " ")
+    # Eliminar espacios innecesarios
     #text = " ".join(text.split())
     #chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
     #return chunks
     return chunk_sentence_based(text)
 
 def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_metadata.pickle'):
+    # 1. Revisar si el índice ya existe
     if os.path.exists(index_file) and os.path.exists(metadata_file):
         logger.info("El índice y los metadatos ya existen. Saliendo de build_index.")
         return
 
+    # 2. Verificar libros existentes en la carpeta
     existing_books = [fname for fname in os.listdir(folder_path) if fname.endswith('.txt')]
     if len(existing_books) < MIN_BOOKS:
         faltan = MIN_BOOKS - len(existing_books)
         logger.info(f"Se requieren al menos {MIN_BOOKS} libros. Actualmente hay {len(existing_books)}. Descargando {faltan} libros más...")
         download_history_collection(faltan)
     
+    # 3. Cargar documentos
     logger.info(f"Cargando documentos desde: {folder_path}")
     documents = load_documents_from_folder(folder_path)
     
@@ -316,9 +262,11 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         logger.error("No se encontraron documentos para indexar después de la descarga.")
         return
     
+    # 4. Crear chunks y metadatos
     chunks = []
     chunk_metadata = []
     for doc_id, doc in enumerate(documents):
+        # Usamos el método rápido para dividir el documento en chunks
         doc_chunks = chunk_text(doc, chunk_size=1000)
         if not doc_chunks:
             continue
@@ -334,12 +282,17 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         logger.error("No se generaron chunks válidos para indexar.")
         return
     
+    # 5. Generar embeddings y normalizarlos (con batch_size para acelerar)
     logger.info("Generando embeddings...")
     try:
-        embedder = SentenceTransformer('all-MiniLM-L6-v2')
+        #embedder = SentenceTransformer('all-MiniLM-L6-v2')
+        #device = "cuda" if torch.cuda.is_available() else "cpu"
+        embedder = SentenceTransformer("sentence-transformers/paraphrase-MiniLM-L3-v2")
+
         print("1")
-        chunk_embeddings = embedder.encode(chunks, convert_to_numpy=True, batch_size=256)
+        chunk_embeddings = embedder.encode(chunks, convert_to_numpy=True, batch_size=512)
         print("2")
+        # Normalizar los embeddings para similitud coseno
         faiss.normalize_L2(chunk_embeddings)
         print("3")
     except Exception as e:
@@ -347,6 +300,7 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         return
 
 
+    # 6. Preparación del submuestreo para entrenamiento del índice.
     doc_indices = defaultdict(list)
     for idx, meta in enumerate(chunk_metadata):
         doc_indices[meta['document_id']].append(idx)
@@ -381,6 +335,7 @@ def build_index(folder_path, index_file='faiss_index.bin', metadata_file='chunk_
         logger.error(f"Error construyendo índice FAISS: {str(e)}")
         return
     
+    # 8. Guardar el índice y los metadatos en disco
     logger.info("Guardando el índice y los metadatos...")
     try:
         faiss.write_index(index, index_file)

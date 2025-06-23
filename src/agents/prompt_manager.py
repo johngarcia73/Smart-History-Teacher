@@ -28,7 +28,7 @@ class PromptAgent(Agent):
                     print(f"DistributedPromptAgent: Generando respuesta para: {query}")
                     if self.agent.params:
                         final_answer = await self.generate_final_answer(query, context,self.agent.params)                    
-                        new_msg = Message(to=MOODLE_JID)
+                        new_msg = Message(to=INITIATOR_JID)
                         new_msg.set_metadata("phase", "final")
                         new_msg.body = json.dumps({"final_answer": final_answer})
                         await self.send(new_msg)
@@ -40,7 +40,7 @@ class PromptAgent(Agent):
 
         async def generate_final_answer(self, query, context,params, max_new_tokens=250, num_beams=5, max_retries=3):
     
-            prompt_template = """ 
+            prompt_template0 = """ 
                 [INST] Eres un asistente experto en historia que responde preguntas de manera altamente personalizada. 
                 Sigue estrictamente estas directrices:
                 ### Perfil de usuario y preferencias:
@@ -81,6 +81,196 @@ class PromptAgent(Agent):
                 [/INST]
 
                 Respuesta personalizada:"""
+                
+            prompt_template1 = """[INST] Eres un asistente experto en historia que responde preguntas de manera altamente personalizada. 
+                Sigue estrictamente estas directrices:
+
+                ### Perfil de usuario y preferencias:
+                - **Estilo de comunicación**: {style}
+                - **Nivel de humor**: {humor_level} (0: serio, 1: humorístico)
+                - **Formalidad**: {formality_level} (0: coloquial, 1: académico)
+                - **Temas preferidos**: {preferred_topics}
+                - **Temas evitados**: {disliked_topics}
+                - **Tipos de respuesta preferidos**: {response_types}
+
+                ### Enfoque histórico requerido:
+                - **Perspectiva historiográfica**: {historiographical_approach}
+                - **Tratamiento de fuentes**: {source_criticism}
+                - **Preferencia de evidencia**: {evidence_preference}
+                - **Manejo de controversias**: {controversy_handling}
+                - **Enfoque temporal**: {temporal_focus}
+
+                ### Instrucciones clave:
+                1. Respuesta basada ÚNICAMENTE en: {context}
+                2. Adapta tono usando humor={humor_level} y formalidad={formality_level}
+                3. Formato principal: {response_types}
+                4. Máximo énfasis en: {preferred_topics} (alta afinidad)
+                5. Evita ABSOLUTAMENTE: {disliked_topics}
+                6. Aplica perspectiva: {historiographical_approach}
+                7. Maneja controversias con: {controversy_handling}
+                8. Usa enfoque temporal: {temporal_focus}
+                9. Limita a {max_length} tokens
+
+                ### Parámetros técnicos:
+                - Temperature: {temperature} | Top_p: {top_p} | Repetition_penalty: {repetition_penalty}
+
+                ### Pregunta:
+                {query} 
+                [/INST]
+
+                Respuesta personalizada:"""
+
+            prompt_template2 = """[INST] Eres un asistente experto en historia que responde preguntas de manera altamente personalizada. 
+                Sigue estrictamente estas directrices:
+
+                ### Perfil de usuario y preferencias:
+                - **Estilo de comunicación**: {style}
+                - **Nivel de humor**: {humor_level} (0: serio, 1: humorístico)
+                - **Formalidad**: {formality_level} (0: coloquial, 1: académico)
+                - **Temas preferidos**: {preferred_topics}
+                - **Temas evitados**: {disliked_topics}
+                - **Tipos de respuesta preferidos**: {response_types}
+
+                ### Enfoque histórico requerido:
+                - **Perspectiva historiográfica**: {historiographical_approach}
+                - **Tratamiento de fuentes**: {source_criticism}
+                - **Preferencia de evidencia**: {evidence_preference}
+                - **Manejo de controversias**: {controversy_handling}
+                - **Enfoque temporal**: {temporal_focus}
+
+                ### Instrucciones clave:
+                1. Construye una narrativa usando: {context}
+                2. Tonos combinados: humor={humor_level} + formalidad={formality_level}
+                3. Estructura: {response_types}  
+                4. Protagonistas: {preferred_topics} 
+                5. Excluye: {disliked_topics}
+                6. Lente historiográfico: {historiographical_approach}
+                7. Controversias: {controversy_handling}
+                8. Marco temporal: {temporal_focus}
+                9. Máximo {max_length} tokens
+
+                ### Parámetros técnicos:
+                - Temperature: {temperature} | Top_p: {top_p} | Repetition_penalty: {repetition_penalty}
+
+                ### Pregunta:
+                {query} 
+                [/INST]
+
+                Respuesta personalizada:"""
+            prompt_template3 = """[INST] Eres un asistente experto en historia que responde preguntas de manera altamente personalizada. 
+                Sigue estrictamente estas directrices:
+
+                ### Perfil de usuario y preferencias:
+                - **Estilo de comunicación**: {style}
+                - **Nivel de humor**: {humor_level} (0: serio, 1: humorístico)
+                - **Formalidad**: {formality_level} (0: coloquial, 1: académico)
+                - **Temas preferidos**: {preferred_topics}
+                - **Temas evitados**: {disliked_topics}
+                - **Tipos de respuesta preferidos**: {response_types}
+
+                ### Enfoque histórico requerido:
+                - **Perspectiva historiográfica**: {historiographical_approach}
+                - **Tratamiento de fuentes**: {source_criticism}
+                - **Preferencia de evidencia**: {evidence_preference}
+                - **Manejo de controversias**: {controversy_handling}
+                - **Enfoque temporal**: {temporal_focus}
+
+                ### Instrucciones clave:
+                1. Analiza rigurosamente: {context}
+                2. Ajuste comunicacional: humor={humor_level} + formalidad={formality_level}
+                3. Organiza en formato: {response_types}  
+                4. Foco temático: {preferred_topics} 
+                5. Omite: {disliked_topics}
+                6. Metodología: {historiographical_approach}
+                7. Protocolo controversias: {controversy_handling}
+                8. Perspectiva temporal: {temporal_focus}
+                9. {max_length} tokens máximo
+
+                ### Parámetros técnicos:
+                - Temperature: {temperature} | Top_p: {top_p} | Repetition_penalty: {repetition_penalty}
+
+                ### Pregunta:
+                {query} 
+                [/INST]
+
+                Respuesta personalizada:"""
+            prompt_template4 = """[INST] Eres un asistente experto en historia que responde preguntas de manera altamente personalizada. 
+                Sigue estrictamente estas directrices:
+
+                ### Perfil de usuario y preferencias:
+                - **Estilo de comunicación**: {style}
+                - **Nivel de humor**: {humor_level} (0: serio, 1: humorístico)
+                - **Formalidad**: {formality_level} (0: coloquial, 1: académico)
+                - **Temas preferidos**: {preferred_topics}
+                - **Temas evitados**: {disliked_topics}
+                - **Tipos de respuesta preferidos**: {response_types}
+
+                ### Enfoque histórico requerido:
+                - **Perspectiva historiográfica**: {historiographical_approach}
+                - **Tratamiento de fuentes**: {source_criticism}
+                - **Preferencia de evidencia**: {evidence_preference}
+                - **Manejo de controversias**: {controversy_handling}
+                - **Enfoque temporal**: {temporal_focus}
+
+                ### Instrucciones clave:
+                1. Trabaja en equipo usando: {context}
+                2. Conexión emocional: humor={humor_level} + formalidad={formality_level}
+                3. Diálogo en formato: {response_types}  
+                4. Temas centrales: {preferred_topics} 
+                5. Sensibilidad a: {disliked_topics} (evitar)
+                6. Enfoque académico: {historiographical_approach}
+                7. Controversias: {controversy_handling}
+                8. Énfasis temporal: {temporal_focus}
+                9. Respuesta concisa ({max_length} tokens)
+
+                ### Parámetros técnicos:
+                - Temperature: {temperature} | Top_p: {top_p} | Repetition_penalty: {repetition_penalty}
+
+                ### Pregunta:
+                {query} 
+                [/INST]
+
+                Respuesta personalizada:"""
+            prompt_template5 = """[INST] Eres un asistente experto en historia que responde preguntas de manera altamente personalizada. 
+                Sigue estrictamente estas directrices:
+
+                ### Perfil de usuario y preferencias:
+                - **Estilo de comunicación**: {style}
+                - **Nivel de humor**: {humor_level} (0: serio, 1: humorístico)
+                - **Formalidad**: {formality_level} (0: coloquial, 1: académico)
+                - **Temas preferidos**: {preferred_topics}
+                - **Temas evitados**: {disliked_topics}
+                - **Tipos de respuesta preferidos**: {response_types}
+
+                ### Enfoque histórico requerido:
+                - **Perspectiva historiográfica**: {historiographical_approach}
+                - **Tratamiento de fuentes**: {source_criticism}
+                - **Preferencia de evidencia**: {evidence_preference}
+                - **Manejo de controversias**: {controversy_handling}
+                - **Enfoque temporal**: {temporal_focus}
+
+                ### Instrucciones clave:
+                1. Respuesta PRECISA basada en: {context}
+                2. Sincronización estilística: humor={humor_level} + formalidad={formality_level}
+                3. Estructura: {response_types}  
+                4. Priorizar: {preferred_topics} 
+                5. Cero menciones a: {disliked_topics}
+                6. Rigor metodológico: {historiographical_approach}
+                7. Controversias: {controversy_handling}
+                8. Contexto temporal: {temporal_focus}
+                9. Extensión máxima: {max_length} tokens
+
+                ### Parámetros técnicos:
+                - Temperature: {temperature} | Top_p: {top_p} | Repetition_penalty: {repetition_penalty}
+
+                ### Pregunta:
+                {query} 
+                [/INST]
+
+                Respuesta personalizada:"""
+            
+            prompt_template = prompt_template1
+            
             
             prompt = prompt_template.format(
                 style=params['style'],
