@@ -9,7 +9,7 @@ from spade.behaviour import CyclicBehaviour
 from spade.message import Message
 from spade.template import Template
 from rank_bm25 import BM25Okapi
-from utils.constants import METADATA_FILE, PROMPT_JID, SCORE_THRESHOLD, SCRAPER_JID, CONFIDENCE_THRESHOLD, CRAWLER_JID
+from utils.constants import METADATA_FILE, PROMPT_JID, SCRAPER_JID, CONFIDENCE_THRESHOLD, CRAWLER_JID
 from utils.helpers import safe_json_dumps
 import logging
 import spacy
@@ -65,12 +65,12 @@ class EvaluationAgent(Agent):
             await self.send(scrape_msg)
 
         async def send_to_prompt(self, query, candidates, original_sender):
-            sorted_candidates = sorted(candidates, key=lambda c: c["final_score"], reverse=True)[:5]
+            sorted_candidates = sorted(candidates, key=lambda c: c["final_score"], reverse=True)[:10]
             context = " ".join(c["text"] for c in sorted_candidates)
             
             sources = "local"
-            if any(c.get("source") == "wikipedia" for c in sorted_candidates):
-                sources = "local+wikipedia"
+            if any(c.get("source") == "internet" for c in sorted_candidates):
+                sources = "local+internet"
             
             msg = Message(to=PROMPT_JID)
             msg.set_metadata("phase", "prompt")
@@ -102,15 +102,12 @@ class EvaluationAgent(Agent):
                 # Normalización de puntajes FAISS
                 faiss_raw_scores = [1.0 / (1.0 + c["distance"]) for c in candidates] if candidates else []
                 
-                    # MEJORA 1: Normalización FAISS más precisa
                 faiss_norm = []
                 if faiss_raw_scores:
-                    # Usar rango intercuartílico para manejar outliers
                     q1, q3 = np.percentile(faiss_raw_scores, [25, 75])
                     iqr = q3 - q1
                     mean = np.mean(faiss_raw_scores)
                     
-                    # Escalado robusto
                     faiss_norm = [(s - mean) / iqr if iqr > 1e-6 else s for s in faiss_raw_scores]
                     # Normalizar a rango [0,1]
                     min_val = min(faiss_norm)
@@ -123,26 +120,14 @@ class EvaluationAgent(Agent):
                 candidate_bm25_scores = []
                 if candidates:
                     bm25_full_scores = self.agent.bm25.get_scores(query_tokens)
-                    query_phrases = self.extract_key_phrases(query)
                     
                     for i, candidate in enumerate(candidates):
                         candidate_index = candidate.get("id", i)
                         score = bm25_full_scores[candidate_index] if candidate_index < len(bm25_full_scores) else 0
                         
-                        # Bonus por coincidencia exacta con verificación de contexto
-                        phrase_bonus = 0
-                        candidate_text = candidate["text"].lower()
-                        
-                        for phrase in query_phrases:
-                            if phrase in candidate_text:
-                                if not self.is_out_of_context(phrase, candidate_text, query):
-                                    importance = min(len(phrase.split()) / 5, 1.0)
-                        
-                        # Límite estricto al bonus total
-                        phrase_bonus = min(phrase_bonus, 0.4)
-                        candidate_bm25_scores.append(score + phrase_bonus)
+                        candidate_bm25_scores.append(score)
                     
-                    # Normalización BM25 con supresión de outliers
+                    # Normalización BM25
                     bm25_norm = self.agent.score_normalizer.robust_scale(candidate_bm25_scores)
                 else:
                     bm25_norm = []
@@ -190,40 +175,6 @@ class EvaluationAgent(Agent):
                 import traceback
                 traceback.print_exc()
             
-            
-        def is_out_of_context(self, phrase, candidate_text, query):
-            """Verifica si la frase aparece en contexto irrelevante"""
-            negative_patterns = [
-                "lista de", "entre ellos", "como por ejemplo", "tales como",
-                "entre otros", "etc.", "y otros"
-            ]
-            
-            # Buscar contexto negativo alrededor de la frase
-            start_pos = candidate_text.find(phrase)
-            if start_pos == -1:
-                return False
-                
-            # Examinar 50 caracteres alrededor de la frase
-            context_start = max(0, start_pos - 50)
-            context_end = min(len(candidate_text), start_pos + len(phrase) + 50)
-            context = candidate_text[context_start:context_end]
-            
-            return any(pattern in context for pattern in negative_patterns)
-
-        def extract_key_phrases(self, query):
-            """Extrae frases clave con filtrado de calidad"""
-            doc = self.agent.query_analyzer.nlp(query.lower())
-            phrases = []
-            
-            for chunk in doc.noun_chunks:
-                if len(chunk.text.split()) > 1:
-                    phrases.append(chunk.text)
-            
-            common_phrases = ["el siglo", "la obra", "del mundo"]
-            phrases = [p for p in phrases if p not in common_phrases]
-            
-            return list(set(phrases))
-
     class ScraperResponseBehaviour(CyclicBehaviour):
         async def run(self):
             msg = await self.receive(timeout=30)
@@ -248,33 +199,33 @@ class EvaluationAgent(Agent):
                 logger.info(f"ScraperResponse: Recibidos {len(scraped_chunks)} chunks para '{query}'")
                 
                 # Calcular BM25 para los nuevos chunks
-                wiki_scores = []
+                outer_scores = []
                 if scraped_chunks:
-                    tokenized_wiki = [word_tokenize(chunk.lower(), language='spanish') for chunk in scraped_chunks]
-                    wiki_bm25 = BM25Okapi(tokenized_wiki)
-                    wiki_scores = wiki_bm25.get_scores(query_tokens)
-                    wiki_norm = self.agent.score_normalizer.sigmoid_scale(wiki_scores, a=10)
+                    tokenized_outer = [word_tokenize(chunk.lower(), language='spanish') for chunk in scraped_chunks]
+                    outer_bm25 = BM25Okapi(tokenized_outer)
+                    outer_scores = outer_bm25.get_scores(query_tokens)
+                    outer_norm = self.agent.score_normalizer.sigmoid_scale(outer_scores, a=10)
                 else:
-                    wiki_norm = []
+                    outer_norm = []
 
                 combined_candidates = candidates[:]
                 
                 for i, chunk in enumerate(scraped_chunks):
-                    wiki_score = wiki_norm[i] if i < len(wiki_norm) else 0
+                    outer_score = outer_norm[i] if i < len(outer_norm) else 0
                     
-                    trust_factor = 0.7
-                    max_local = max(c["final_score"] for c in candidates) if candidates else 1.0
-                    adjusted_score = wiki_score * max_local * trust_factor
+                    trust_factor = 0.8
+                    #max_local = max(c["final_score"] for c in candidates) if candidates else 1.0
+                    adjusted_score = outer_score * trust_factor
                     
                     combined_candidates.append({
                         "text": chunk,
-                        "source": "wikipedia",
+                        "source": "internet",
                         "final_score": adjusted_score
                     })
                 
                 # Re-rankear
                 combined_candidates.sort(key=lambda x: x["final_score"], reverse=True)
-                sorted_candidates = combined_candidates[:5]
+                sorted_candidates = combined_candidates[:10]
                 context = " ".join(c["text"] for c in sorted_candidates)
                 
                 prompt_msg = Message(to=PROMPT_JID)
@@ -283,7 +234,7 @@ class EvaluationAgent(Agent):
                 prompt_msg.body = safe_json_dumps({
                     "query": query,
                     "context": context,
-                    "sources": "local+wikipedia"
+                    "sources": "local+outerpedia"
                 })
                 await self.send(prompt_msg)
                 logger.info(f"EvaluationAgent: Contexto mejorado enviado a PromptAgent para '{query}'")
@@ -319,7 +270,6 @@ class EvaluationAgent(Agent):
         return normalized_weights
 
 
-
 class QueryAnalyzer:
     def __init__(self):
         try:
@@ -341,11 +291,6 @@ class QueryAnalyzer:
         for q_type, markers in question_types.items():
             if any(marker in question for marker in markers):
                 return q_type
-        
-        # Análisis de entidades para preguntas factuales
-        entities = [ent.label_ for ent in doc.ents]
-        if any(entity in entities for entity in ["PER", "DATE", "LOC", "MISC"]):
-            return "factual"
         
         # Predeterminado conceptual para preguntas complejas
         return "conceptual"
