@@ -27,6 +27,7 @@ class InteractionBasedUpdater:
         self._update_topic_prefs(profile, interaction_data)
         self._update_engagement_metrics(profile, interaction_data)
         self._update_history_prefs(profile,interaction_data)
+        
 
         # Guardar perfil actualizado
         self.profile_manager.save_profile(profile)
@@ -140,7 +141,9 @@ class InteractionBasedUpdater:
             history['avg_engagement'] = normalized_engagement
         else:
             history['avg_engagement'] = 0.9 * history['avg_engagement'] + 0.1 * normalized_engagement
-    
+        history_query= interaction.get("query_History",{})
+        history["query_History"][history_query[0]]=history_query[1]
+        history["query_History"][:50]
     def _needs_cluster_update(self):
         """Determina si se necesita actualizar los clusters de usuarios"""
         if not self.cluster_last_updated:

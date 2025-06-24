@@ -51,7 +51,7 @@ class PersonalityAnalyzerAgent(Agent):
                 next_msg.body = json.dumps({
                     "query": structured_data["expanded_query"]
                 })
-                await self.send(next_msg)
+                #await self.send(next_msg)
                 next_msg = Message(
                     to= "profilemanageragent@localhost",
                     body=json.dumps
@@ -136,7 +136,7 @@ class PersonalityAnalyzerAgent(Agent):
                 "Content-Type": "application/json"
             }
             response = requests.post("https://apigateway.avangenio.net/chat/completions", headers=headers, json=body)
-            response.raise_for_status()  # Lanza una excepción si hay algún error
+            response.raise_for_status() 
             return response.json()
         async def send_request(self,prompt):
             body = {

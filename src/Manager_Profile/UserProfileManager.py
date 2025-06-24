@@ -49,7 +49,8 @@ class UserProfileManager:
                 "engagement_metrics": {
                     "avg_engagement": 0.5,
                     "last_engagement": 0.5
-                }
+                },
+                "query_History":{}
             },
             "metadata": {
                 "is_new_user": True,

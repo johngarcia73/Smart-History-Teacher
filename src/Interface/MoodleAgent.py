@@ -87,12 +87,13 @@ class MoodleAPI:
                 continue
 
             messages = self._make_request(
-                'core_message_get_messages',
+                'core_message_get_conversation_messages',
                 {
-                    'useridto': self.USER_ID,
-                    'useridfrom': other_user_id,  # Usar USER ID real
-                    'read': 0,
-                    'limitfrom': self.USER_ID,           
+                    #'useridto': self.USER_ID,
+                    'currentuserid':self.USER_ID,
+                    'convid':conv['id'],
+                    #'useridfrom': other_user_id,  # Usar USER ID real
+                    'limitfrom': self.USER_ID           
                 }
             )
             if messages and 'messages' in messages:
@@ -156,16 +157,21 @@ class MoodleMonitorBehaviour(PeriodicBehaviour):
             #msg= self.send_User_Data_to_Profile(messages[id])
             if not messages[id]: continue
             for message in messages[id]:
-                
-                self.agent.moodle_api.Block_User(message['useridfrom'])
-                if message['text']:
-                    msg = Message(
-                        to="personality_analizer@localhost",
-                        body=json.dumps({"query":message['text'],"user_id": message['useridfrom']}),
-                        metadata={"phase":"analyzer"}
-                    )
-                    await self.send(msg)
-                    print(f"[Monitor] Enviados {len(message)} mensajes al agente procesador")
+                msg=Message(to="profilemanageragent@localhost",
+                            body=json.dumps({"user_id":message['useridfrom']}),
+                             metadata={"phase":'history_query'})
+                history_query= await self.receive(timeout=20)
+                if history_query and history_query.metadata['phase']== "history_query":
+                    new_query= await  self.msg_in_history_query(history_query,message['text'])
+                    if message['text'] and not new_query:
+                        self.agent.moodle_api.Block_User(message['useridfrom'])
+                        msg = Message(
+                            to="personality_analizer@localhost",
+                            body=json.dumps({"query":message['text'],"user_id": message['useridfrom']}),
+                            metadata={"phase":"analyzer"}
+                        )
+                        await self.send(msg)
+                        print(f"[Monitor] Enviados {len(message)} mensajes al agente procesador")
 
                 msg = await self.receive(timeout=10)
                 if msg:
@@ -175,6 +181,16 @@ class MoodleMonitorBehaviour(PeriodicBehaviour):
                         final_answer = body.get("final_answer", "")
                         self.agent.moodle_api.send_messages(final_answer,id,message['timecreated'])
                         self.agent.moodle_api.Unblock_User(message['useridfrom'])
-                        self.agent.moodle_api.Mark_messages_read(message['id'])
-    #def send_User_Data_to_Profile(id):
+                        msg= Message( 
+                            to="profilemanageragent@localhost",
+                            body=json.dumps({"user_id":message['useridfrom'],"query_History": {message["text"]:final_answer}}),
+                            metadata={"phase":"Update"}
+                        )
+                        await self.send(msg)
+    async def msg_in_history_query(self,history_query,query):
+        if query in history_query:
+            return True
+        else:
+            return False
+   
         

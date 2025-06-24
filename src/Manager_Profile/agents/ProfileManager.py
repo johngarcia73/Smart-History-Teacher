@@ -20,6 +20,8 @@ class profilemanageragent(Agent):
         handleUpdateProfile= HandleUpdateProfileBehaviour()
         template = Template(metadata={"phase": "interaction"})
         self.add_behaviour(handleUpdateProfile,template)
+        template= Template(metadata={"phase": "history_query"})
+        self.add_behaviour(handlerHistoryBehaviour,template)
 
         pass
 class HandleUpdateProfileBehaviour(CyclicBehaviour):
@@ -37,7 +39,11 @@ class HandleUpdateProfileBehaviour(CyclicBehaviour):
                 metadata= {"phase":"params"}
             )
             await self.send(send_msg)
-    
+        elif  msg and msg.get_metadata("phase") == "Update":
+            data= json.loads(msg.body)
+            User_Profile= self.agent.UpdateManager.update_profile(data["user_id"],data["interaction_data"])
+            return True
+        
     async def get_llm_parameters(self, profile):
         """Genera parámetros para el LLM basado en el perfil del usuario"""
         prefs = profile['preferences']
@@ -107,6 +113,7 @@ class HandleUpdateProfileBehaviour(CyclicBehaviour):
             'evidence_preference': history_prefs['evidence_preference'],
             'controversy_handling': history_prefs['controversy_handling'],
             'temporal_focus': history_prefs['temporal_focus'],
+            'query_history': history.get("query_History")
         }
         ## Añadir información de cluster si está disponible
         #if user_id in self.user_clusters:
@@ -131,4 +138,16 @@ class HandleProfileBehaviour(CyclicBehaviour):
                 metadata={"phase": "profile"}
             ) 
             await self.send(msg)           
-               
+class handlerHistoryBehaviour(CyclicBehaviour):
+    async def run(self):
+        msg= await self.receive(timeout=10)
+        if  msg and msg.metadata["phase"] == 'history_query':
+                data= json.loads(msg.body)
+                profile= self.agent.ProfileManager.get_profile(data["user_id"])
+                history_query= profile.get("preferences",{}).get("interaction_history",{}).get("query_History",{})
+                msg= Message(
+                        to="moodle_agent@localhost",
+                        body= json.dumps({"history_query":history_query,}),
+                        metadata={"phase": "history_query"}
+                        )
+                await self.send(msg)

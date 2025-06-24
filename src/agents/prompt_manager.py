@@ -28,7 +28,7 @@ class PromptAgent(Agent):
                     print(f"DistributedPromptAgent: Generando respuesta para: {query}")
                     if self.agent.params:
                         final_answer = await self.generate_final_answer(query, context,self.agent.params)                    
-                        new_msg = Message(to=INITIATOR_JID)
+                        new_msg = Message(to=MOODLE_JID)
                         new_msg.set_metadata("phase", "final")
                         new_msg.body = json.dumps({"final_answer": final_answer})
                         await self.send(new_msg)
@@ -105,7 +105,7 @@ Sigue METICULOSAMENTE estas reglas:
 
 2. PERSONALIZACIÓN EXTREMA:
    • Tono: con humor {humor_level}  
-   • Enfatizar: {highest_affinity_topic}
+   • Enfatizar: {topic_affinity} (valores mayor a 0.5)
 
 3. RESTRICCIONES:
    • JAMÁS mencionar: {disliked_topics} 
@@ -130,7 +130,7 @@ Respuesta adaptada: """
 - Formalidad: {formality_level}/1.0 
 - Ama: {preferred_topics} 
 - Odia: {disliked_topics} 
-- Obsesionado con: {highest_affinity_topic}
+- Obsesionado con: {topic_affinity} (valores mayor a 0.5)
 
 ### MARCO HISTORIOGRÁFICO:
 - Lente principal: {historiographical_approach} 
@@ -146,7 +146,7 @@ Respuesta adaptada: """
 2. CONSTRUYE:
    • Formato: {response_types} 
    • Clima emocional: con toques de humor {humor_level} 
-   • Protagonista: {highest_affinity_topic}
+   • Protagonista: {topic_affinity} (valores mayor a 0.5)
 
 3. EVITA ABSOLUTAMENTE:
    • Mención de: {disliked_topics} 
@@ -173,7 +173,7 @@ Narración histórica personalizada: """
 |                 | Tono base                 | {tone}                     |
 | Contenido       | Temas preferidos          | {preferred_topics}         |
 |                 | Temas prohibidos          | {disliked_topics}          |
-|                 | Enfoque afinidad          | {highest_affinity_topic}   |
+|                 | Enfoque afinidad          | {topic_affinity} (valores mayor a 0.5)   |
 | Metodología     | Perspectiva               | {historiographical_approach}|
 |                 | Crítica fuentes           | {source_criticism}         |
 |                 | Jerarquía evidencia       | {evidence_preference}      |
@@ -187,7 +187,7 @@ Narración histórica personalizada: """
 ### REGLAS OPERATIVAS:
 1. ADAPTACIÓN: 
    - Tono = × humor_{humor_level} 
-2. ÉNFASIS: Máximo en {highest_affinity_topic} 
+2. ÉNFASIS: Máximo en {topic_affinity} (valores mayor a 0.5) 
 3. EXCLUSIÓN: 0 menciones a {disliked_topics} 
 4. EXTENSIÓN: ≤ {max_length} tokens 
 
@@ -209,7 +209,7 @@ Respuesta estructurada: """
 - Formalidad ideal: {formality_level}/1.0
 - Temas favoritos: {preferred_topics} 
 - Temas sensibles: {disliked_topics} 
-- PASIÓN por: {highest_affinity_topic}
+- PASIÓN por: {topic_affinity} (valores mayor a 0.5)
 
 ### NUESTRO ACUERDO METODOLÓGICO:
 - Lente histórico: {historiographical_approach} 
@@ -221,11 +221,14 @@ Respuesta estructurada: """
 ### MATERIAL DE TRABAJO (SOLO esto):
 {context}
 
+### HISTORIAL CONVERSACIONAL:
+{query_history}(la estructura del diccionario es query:answer)
+
 ### CÓMO TRABAJAREMOS JUNTOS:
 1. FORMATO: {response_types} 
 2. CLIMA: 
-   • Tono {tone} con humor {humor_level}
-3. FOCO: Brillar en {highest_affinity_topic} 
+   • humor {humor_level}
+3. FOCO: Brillar en {topic_affinity} (valores mayor a 0.5) 
 4. LÍMITES: 
    • Cero mención a {disliked_topics} 
    • Respuesta ≤ {max_length} tokens
@@ -267,7 +270,7 @@ Exploremos juntos: """
 1. ADAPTACIÓN COMUNICATIVA:
    - Registrar: {formality_level_label} con humor {humor_level} 
 2. PRIORIZACIÓN TEMÁTICA:
-   - Máxima atención a: {highest_affinity_topic} 
+   - Máxima atención a: {topic_affinity} (valores mayor a 0.5) 
    - Cero exposición a: {disliked_topics} 
 3. PARÁMETROS TÉCNICOS:
    - Longitud: ≤ {max_length} tokens 
@@ -302,7 +305,8 @@ Respuesta de precisión adaptativa: """
                 top_p=params['top_p'],
                 repetition_penalty=params['repetition_penalty'],
                 context=context,
-                query=query
+                query=query,
+                query_history=params["query_history"]
             )
               
             for attempt in range(max_retries):

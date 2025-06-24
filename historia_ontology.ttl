@@ -242,10 +242,6 @@ hist:influenciadoPor a owl:ObjectProperty ;
     rdfs:domain hist:EventoHistorico ;
     rdfs:range hist:EventoHistorico .
 
-hist:influencio a owl:ObjectProperty ;
-    rdfs:domain hist:Personaje ;
-    rdfs:range hist:Personaje .
-
 hist:ocurreEn a owl:ObjectProperty ;
     rdfs:domain hist:EventoHistorico ;
     rdfs:range hist:Periodo .
