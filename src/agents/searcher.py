@@ -46,7 +46,7 @@ class SearchAgent(Agent):
                 query = payload.get("query", "")
                 print(f"DistributedSearchAgent: Consulta recibida: {query}")
                 
-                #query = ontology_man.expand_query(query)
+                query = ontology_man.expand_query(query)
                 
                 query_embedding = self.agent.embedder.encode([query])[0]
                 query_embedding = np.array([query_embedding])

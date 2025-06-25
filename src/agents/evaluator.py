@@ -60,7 +60,7 @@ class EvaluationAgent(Agent):
             scrape_msg.set_metadata("phase", "scrape_request")
             scrape_msg.body = safe_json_dumps({
                 "query": query,
-                "max_chunks": 10
+                "max_chunks": 100
             })
             await self.send(scrape_msg)
 
