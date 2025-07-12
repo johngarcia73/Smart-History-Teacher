@@ -61,7 +61,7 @@ def simple_search(query, limit=100):
         logger.error(f"Error en búsqueda: {str(e)}")
         return []
 
-def simple_scrape(url, max_chunks=3):
+def simple_scrape(url, max_chunks=100):
     """Extracción de texto crudo"""
     try:
         logger.info(f"Scrapeando: {url}")
@@ -99,7 +99,7 @@ def simple_scrape(url, max_chunks=3):
         logger.error(f"Error scrapeando {url}: {str(e)}")
         return []
 
-async def simple_scrape_web(query, max_chunks=5):
+async def simple_scrape_web(query, max_chunks=100):
     """Para testear"""
     logger.info(f"Iniciando scraping para: '{query}'")
     

@@ -28,7 +28,7 @@ class PromptAgent(Agent):
                     print(f"DistributedPromptAgent: Generando respuesta para: {query}")
                     if self.agent.params:
                         final_answer = await self.generate_final_answer(query, context,self.agent.params)                    
-                        new_msg = Message(to=INITIATOR_JID)
+                        new_msg = Message(to=MOODLE_JID)
                         new_msg.set_metadata("phase", "final")
                         new_msg.body = json.dumps({"final_answer": final_answer})
                         await self.send(new_msg)

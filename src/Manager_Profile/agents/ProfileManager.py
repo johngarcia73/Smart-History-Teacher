@@ -4,6 +4,7 @@ from spade.behaviour import CyclicBehaviour
 from spade.template import Template
 from ..UserProfileManager import UserProfileManager
 from ..UpdateProfile import InteractionBasedUpdater
+from ..PSOParameterOptimizer import PSOParameterOptimizer
 import numpy as np
 import json
 class profilemanageragent(Agent):
@@ -30,7 +31,7 @@ class HandleUpdateProfileBehaviour(CyclicBehaviour):
         if msg and msg.get_metadata("phase") == "interaction":
             data= json.loads(msg.body)
             User_Profile= self.agent.UpdateManager.update_profile(data["user_id"],data["interaction_data"])
-            params=  await self.get_llm_parameters(User_Profile)
+            params=  await self.get_llm_parameters_op(User_Profile)
             send_msg= Message(
                 to="prompt_agent@localhost",
                 body=json.dumps(params),
@@ -115,6 +116,26 @@ class HandleUpdateProfileBehaviour(CyclicBehaviour):
         #    params['cluster_description'] = self._generate_cluster_descriptions()[cluster_id]
         return params
 
+
+    async def get_llm_parameters_op(self, profile):
+        """Usa PSO para optimizar parámetros LLM"""
+
+        if profile['metadata']['optimization_status'] == 'optimized':
+            # Usar parámetros pre-optimizados
+            return profile['metadata']['optimized_params']
+    
+        else:
+            # Optimizar con PSO
+            optimizer = PSOParameterOptimizer(profile)
+            optimized_params = optimizer.optimize()
+            
+            # Actualizar perfil
+            profile['metadata']['optimization_status'] = 'optimized'
+            profile['metadata']['optimized_params'] = optimized_params
+            self.agent.ProfileManager.save_profile(profile)
+            
+            return optimized_params
+    
 class HandleProfileBehaviour(CyclicBehaviour):
     async def run(self):
         
